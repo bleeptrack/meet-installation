@@ -5,6 +5,14 @@ const http = require('http');
 const server = http.createServer(app);
 const io = require('socket.io')(server);
 
+players = []
+
+function startNewSession() {
+  console.log("Starting new session");
+  players = []
+  io.emit('newSession')
+}
+
 app.get('/backend', (req, res) => {
   res.sendFile(__dirname + '/static/backend.html');
 });
