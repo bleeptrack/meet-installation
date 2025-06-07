@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Localized Website</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "i18next": "/node_modules/i18next/dist/esm/i18next.js",
+        "i18next-browser-languagedetector": "/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js",
+        "i18next-http-backend": "/node_modules/i18next-http-backend/esm/index.js"
+      }
+    }
+    </script>
+    <script type="module" src="/js/i18n.js"></script>
+    <script type="module" src="/js/language-switcher.js"></script>
+    <script type="module" src="/js/UsernameChooser.js"></script>
+    <script type="module" src="/js/Questions.js"></script>
+    <script type="module" src="/js/TarotCard.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .content {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <language-switcher></language-switcher>
+    <div id="username"></div>
+    <main>
+        <p id="waitingForStart" data-i18n="waitingForStart">Just a moment...</p>
+    </main>
+
+    <script type="module">
+        import i18next from 'i18next';
+        import { t, i18nPromise } from '/js/i18n.js';
+
+        // Wait for i18next to initialize before setting up the application
+        i18nPromise.then(() => {
+            // Create a single socket instance and make it available globally
+            window.socket = io();
+            
+            window.socket.on('connect', () => {
+                console.log('Connected to server');
+            });
+
+            window.socket.on('disconnect', () => {
+                console.log('Disconnected from server');
+            });
+
+            window.socket.on('order:username', () => {
+                document.querySelector('main').innerHTML = '<username-chooser></username-chooser>';
+            });
+
+            window.socket.on('order:questions', () => {
+                console.log("Received order:questions");
+                document.querySelector('main').innerHTML = '<questions-component></questions-component>';
+            });
+
+            window.socket.on('order:results', (players) => {
+                console.log("Received order:results");
+                const username = sessionStorage.getItem('username');
+                const currentPlayer = players.find(player => player.username === username);
+                console.log("Current player:", currentPlayer);
+                const pairIndex = currentPlayer.pairIndex;
+                document.querySelector('main').innerHTML = `<tarot-card image-url="https://www.tarot.com/images/cards/the-fool.jpg" text="Pair ${pairIndex}"></tarot-card>`;
+            });
+
+            window.socket.on('order:grouping', (players) => {
+                console.log("Received order:grouping");
+                const username = sessionStorage.getItem('username');
+                const currentPlayer = players.find(player => player.username === username);
+                console.log("Current player:", currentPlayer);
+                const groupId = currentPlayer.groupId;
+                const groupLetter = String.fromCharCode(65 + groupId); // Convert 0 to 'A', 1 to 'B', etc.
+                document.querySelector('main').innerHTML = `<p>Group ${groupLetter}</p>`;
+            });
+
+            if (sessionStorage.getItem('username')) {
+                document.querySelector('#username').innerHTML = sessionStorage.getItem('username');
+            }
+
+            // Update translations when language changes
+            window.addEventListener('languageChanged', (event) => {
+                document.querySelectorAll('[data-i18n]').forEach(element => {
+                    const key = element.getAttribute('data-i18n');
+                    element.textContent = t(key);
+                });
+            });
+        }).catch(error => {
+            console.error('Failed to initialize i18next:', error);
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,53 @@
+{
+  "welcome": "Willkommen",
+  "language": "Sprache",
+  "buttons": {
+    "submit": "Absenden",
+    "cancel": "Abbrechen",
+    "nextQuestion": "Nächste Frage"
+  },
+  "errors": {
+    "usernameRequired": "Benutzername ist erforderlich"
+  },
+  "usernamePlaceholder": "Benutzernamen eingeben",
+  "waitingForStart": "Gleich geht's los...",
+  "questions": [
+    {
+      "question": "Was bevorzugst du...?",
+      "a1": "Brit-Pop",
+      "a2": "K-Pop",
+      "a3": "Electro-Pop"
+    },
+    {
+      "question": "Was ist dein bevorzugtes Transportmittel?",
+      "a1": "Zug",
+      "a1-feedback": "feedback1",
+      "a2": "Flugzeug",
+      "a2-feedback": "feedback2",
+      "a3": "Pferd",
+      "a3-feedback": "feedback3"
+    },
+    {
+      "question": "Wie viele Kinder möchtest du haben?",
+      "a1": "1",
+      "a2": "6",
+      "a3": "4"
+    },
+    {
+      "question": "Was sind Verbündete?",
+      "a1": "Außerirdische",
+      "a1-feedback": "feedback1",
+      "a2": "Freunde",
+      "a2-feedback": "feedback2",
+      "a3": "Feinde",
+      "a3-feedback": "feedback3"
+    },
+    {
+      "question": "Umweltverschmutzung ist...",
+      "a1": "ja",
+      "a2": "nein",
+      "a3": "vielleicht"
+    }
+  ],
+  "congratulations": "Glückwunsch! Du hast ein Match!"
+} 
