@@ -35,14 +35,6 @@
         window.socket.on('disconnect', () => {
             console.log('Disconnected from server');
         });
-
-        // Update translations when language changes
-        window.addEventListener('languageChanged', (event) => {
-            document.querySelectorAll('[data-i18n]').forEach(element => {
-                const key = element.getAttribute('data-i18n');
-                element.textContent = t(key);
-            });
-        });
     </script>
 </body>
 </html>

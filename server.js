@@ -20,12 +20,16 @@ currentOrder = "waiting"
 
 // Store socket ID to username mapping for reconnection handling
 const socketToUsername = new Map();
+const usernameToSocket = new Map();
+const playerAnswers = new Map(); // Store answers by username
 
 function startNewSession() {
   console.log("Starting new session");
   players = []
   currentOrder = "username"
   socketToUsername.clear();
+  usernameToSocket.clear();
+  playerAnswers.clear(); // Clear stored answers
   console.log("Sending order", currentOrder)
   io.emit(`order:${currentOrder}`)
   io.emit('info:players', players);
@@ -46,8 +50,17 @@ function isUsernameTaken(username) {
 }
 
 function removePlayer(socketId) {
+  const username = socketToUsername.get(socketId);
+  if (username) {
+    usernameToSocket.delete(username);
+  }
   const index = players.findIndex(player => player.id === socketId);
   if (index !== -1) {
+    // Store answers before removing player
+    const player = players[index];
+    if (player.answers) {
+      playerAnswers.set(player.username, player.answers);
+    }
     players.splice(index, 1);
     socketToUsername.delete(socketId);
   }
@@ -64,37 +77,11 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
   console.log('A user connected');
   
-  
-  // Check if this is a reconnection
-  const previousUsername = socketToUsername.get(socket.id);
-  if (previousUsername) {
-    // Restore the player's session
-    players.push({
-      id: socket.id,
-      username: previousUsername
-    });
-    io.emit('info:players', players);
-  } else {
-    // Send current players list to the newly connected player
-    socket.emit(`order:${currentOrder}`, players);
-    socket.emit('info:players', players);
-  }
-  
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
-    removePlayer(socket.id);
-    io.emit('info:players', players);
-  });
-
-  socket.on('action:clearSession', () => {
-    startNewSession();
-  });
-
   socket.on('action:username', (username) => {
     console.log("Username received:", username);
     
-    // Check if username is already taken
-    if (isUsernameTaken(username)) {
+    // Check if username is already taken by another socket
+    if (isUsernameTaken(username) && usernameToSocket.get(username) !== socket.id) {
       socket.emit('error:usernameTaken', 'This username is already taken');
       return;
     }
@@ -103,17 +90,35 @@ io.on('connection', (socket) => {
     removePlayer(socket.id);
     
     // Add new player
-    players.push({
+    const newPlayer = {
       id: socket.id,
       username: username
-    });
+    };
     
-    // Store the mapping for reconnection handling
+    // Restore answers if they exist
+    if (playerAnswers.has(username)) {
+      newPlayer.answers = playerAnswers.get(username);
+    }
+    
+    players.push(newPlayer);
+    
+    // Store the mappings for reconnection handling
     socketToUsername.set(socket.id, username);
+    usernameToSocket.set(username, socket.id);
     
     console.log("Players after adding:", players);
     console.log("Emitting info:players event");
     io.emit('info:players', players);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
+    removePlayer(socket.id);
+    io.emit('info:players', players);
+  });
+
+  socket.on('action:clearSession', () => {
+    startNewSession();
   });
 
   socket.on('info:answer', (data) => {

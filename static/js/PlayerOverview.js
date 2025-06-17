@@ -65,7 +65,6 @@ class PlayerOverview extends HTMLElement {
                 .player-item {
                     padding: 10px;
                     margin: 5px;
-                    background-color: #f5f5f5;
                     border-radius: 4px;
                 }
                 button {
@@ -97,11 +96,34 @@ class PlayerOverview extends HTMLElement {
         this.addEventListeners();
     }
 
-    renderPlayerList() {
-        return this.players.map(player => `
-            <div class="player-item">${player.username} ${player.answers ? player.answers.length : 0}</div>
-        `).join('');
+    getPairColor(pairIndex) {
+        const colors = [
+            '#FFE4E1', // Misty Rose
+            '#E0FFFF', // Light Cyan
+            '#F0FFF0', // Honeydew
+            '#FFF0F5', // Lavender Blush
+            '#F5F5DC', // Beige
+            '#E6E6FA', // Lavender
+            '#FFEFD5', // Peach Puff
+            '#F0F8FF', // Alice Blue
+            '#FFFACD', // Lemon Chiffon
+            '#F5FFFA', // Mint Cream
+            '#FFFAF0', // Floral White
+            '#F8F8FF'  // Ghost White
+        ];
+        return colors[pairIndex % colors.length];
     }
+
+    renderPlayerList() {
+        return this.players.map(player => {
+            const answerCount = player.answers ? player.answers.length : 0;
+            const color = answerCount >= 5 ? this.getPairColor(11) : this.getPairColor(0);
+            return `
+                <div class="player-item" style="background-color: ${color}">${player.username} ${answerCount}</div>
+            `;
+        }).join('');
+    }
+
 
     renderGroupedPlayers() {
         // Group players by groupID
@@ -125,21 +147,21 @@ class PlayerOverview extends HTMLElement {
                     <h3>Group A</h3>
                     ${(groups[0] || []).map((player, index, array) => `
                         ${index > 0 && player.pairIndex !== array[index - 1].pairIndex ? '<hr style="margin: 10px 0; border: 1px dashed #ccc;">' : ''}
-                        <div class="player-item">${player.username}</div>
+                        <div class="player-item" style="background-color: ${this.getPairColor(player.pairIndex)}">${player.username}</div>
                     `).join('')}
                 </div>
                 <div class="group-container">
                     <h3>Group B</h3>
                     ${(groups[1] || []).map((player, index, array) => `
                         ${index > 0 && player.pairIndex !== array[index - 1].pairIndex ? '<hr style="margin: 10px 0; border: 1px dashed #ccc;">' : ''}
-                        <div class="player-item">${player.username}</div>
+                        <div class="player-item" style="background-color: ${this.getPairColor(player.pairIndex)}">${player.username}</div>
                     `).join('')}
                 </div>
                 <div class="group-container">
                     <h3>Group C</h3>
                     ${(groups[2] || []).map((player, index, array) => `
                         ${index > 0 && player.pairIndex !== array[index - 1].pairIndex ? '<hr style="margin: 10px 0; border: 1px dashed #ccc;">' : ''}
-                        <div class="player-item">${player.username}</div>
+                        <div class="player-item" style="background-color: ${this.getPairColor(player.pairIndex)}">${player.username}</div>
                     `).join('')}
                 </div>
             </div>

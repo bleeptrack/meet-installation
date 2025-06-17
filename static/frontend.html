@@ -35,7 +35,7 @@
     <language-switcher></language-switcher>
     <div id="username"></div>
     <main>
-        <p id="waitingForStart" data-i18n="waitingForStart">Just a moment...</p>
+        <p id="waitingForStart">Just a moment...</p>
     </main>
 
     <script type="module">
@@ -47,8 +47,31 @@
             // Create a single socket instance and make it available globally
             window.socket = io();
             
+            // Apply initial translations
+            document.querySelector('#waitingForStart').textContent = t('waitingForStart');
+            
             window.socket.on('connect', () => {
                 console.log('Connected to server');
+                // If we have a stored username, automatically reconnect with it
+                const storedUsername = localStorage.getItem('username');
+                if (storedUsername) {
+                    window.socket.emit('action:username', storedUsername);
+                    // Restore the last phase if it exists
+                    const lastPhase = localStorage.getItem('lastPhase');
+                    if (lastPhase) {
+                        switch(lastPhase) {
+                            case 'questions':
+                                document.querySelector('main').innerHTML = '<questions-component></questions-component>';
+                                break;
+                            case 'results':
+                                // We'll need to wait for the players data to show the correct card
+                                break;
+                            case 'grouping':
+                                // We'll need to wait for the players data to show the correct group
+                                break;
+                        }
+                    }
+                }
             });
 
             window.socket.on('disconnect', () => {
@@ -57,42 +80,48 @@
 
             window.socket.on('order:username', () => {
                 document.querySelector('main').innerHTML = '<username-chooser></username-chooser>';
+                localStorage.setItem('lastPhase', 'username');
             });
 
             window.socket.on('order:questions', () => {
                 console.log("Received order:questions");
                 document.querySelector('main').innerHTML = '<questions-component></questions-component>';
+                localStorage.setItem('lastPhase', 'questions');
             });
 
             window.socket.on('order:results', (players) => {
                 console.log("Received order:results");
-                const username = sessionStorage.getItem('username');
+                const username = localStorage.getItem('username');
                 const currentPlayer = players.find(player => player.username === username);
                 console.log("Current player:", currentPlayer);
                 const pairIndex = currentPlayer.pairIndex;
                 document.querySelector('main').innerHTML = `<tarot-card image-url="https://www.tarot.com/images/cards/the-fool.jpg" text="Pair ${pairIndex}"></tarot-card>`;
+                localStorage.setItem('lastPhase', 'results');
             });
 
             window.socket.on('order:grouping', (players) => {
                 console.log("Received order:grouping");
-                const username = sessionStorage.getItem('username');
+                const username = localStorage.getItem('username');
                 const currentPlayer = players.find(player => player.username === username);
                 console.log("Current player:", currentPlayer);
                 const groupId = currentPlayer.groupId;
                 const groupLetter = String.fromCharCode(65 + groupId); // Convert 0 to 'A', 1 to 'B', etc.
                 document.querySelector('main').innerHTML = `<p>Group ${groupLetter}</p>`;
+                localStorage.setItem('lastPhase', 'grouping');
             });
 
-            if (sessionStorage.getItem('username')) {
-                document.querySelector('#username').innerHTML = sessionStorage.getItem('username');
+            // Clear phase when starting a new session
+            window.socket.on('order:waiting', () => {
+                localStorage.removeItem('lastPhase');
+            });
+
+            if (localStorage.getItem('username')) {
+                document.querySelector('#username').innerHTML = localStorage.getItem('username');
             }
 
             // Update translations when language changes
             window.addEventListener('languageChanged', (event) => {
-                document.querySelectorAll('[data-i18n]').forEach(element => {
-                    const key = element.getAttribute('data-i18n');
-                    element.textContent = t(key);
-                });
+                document.querySelector('#waitingForStart').textContent = t('waitingForStart');
             });
         }).catch(error => {
             console.error('Failed to initialize i18next:', error);

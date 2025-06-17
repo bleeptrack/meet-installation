@@ -6,7 +6,8 @@ class Questions extends HTMLElement {
         super();
         this.attachShadow({ mode: 'open' });
         this.socket = window.socket;
-        this.currentQuestion = 0;
+        // Load current question from localStorage or default to 0
+        this.currentQuestion = parseInt(localStorage.getItem('currentQuestion')) || 0;
         this.questions = null;
     }
 
@@ -17,8 +18,11 @@ class Questions extends HTMLElement {
         // Load questions structure once
         try {
             const response = await fetch('/translations/en-US.json');
+            
             const data = await response.json();
+         
             this.questions = data.questions;
+           
             console.log(this.questions);
             this.render();
             this.addEventListeners();
@@ -35,6 +39,10 @@ class Questions extends HTMLElement {
 
     render() {
         const question = this.questions[this.currentQuestion];
+        if(!question) {
+            this.showEndScreen();
+            return;
+        }
         this.shadowRoot.innerHTML = `
             <style>
                 .question-container {
@@ -110,7 +118,7 @@ class Questions extends HTMLElement {
                 this.socket.emit('info:answer', {
                     questionIndex: this.currentQuestion,
                     answerIndex: selectedIndex,
-                    username: sessionStorage.getItem('username')
+                    username: localStorage.getItem('username')
                 });
                 
                 // Only show feedback if it exists for this answer
@@ -128,19 +136,33 @@ class Questions extends HTMLElement {
             });
         });
 
-        nextButton.addEventListener('click', () => {
-            this.currentQuestion++;
-            if (this.currentQuestion < this.questions.length) {
-                this.render();
-                this.addEventListeners();
-            } else {
-                this.shadowRoot.innerHTML = `
-                    <div class="question-container">
-                        <h2>${t('congratulations')}</h2>
-                    </div>
-                `;
-            }
-        });
+        if (nextButton) {
+            nextButton.addEventListener('click', () => {
+                this.currentQuestion++;
+                // Save current question to localStorage
+                localStorage.setItem('currentQuestion', this.currentQuestion);
+                this.proceedToNextQuestion();
+            });
+        }
+    }
+
+    proceedToNextQuestion() {
+        if (this.currentQuestion < this.questions.length) {
+            this.render();
+            this.addEventListeners();
+        } else {
+            // Clear the question state when completed
+            //localStorage.removeItem('currentQuestion');
+            this.showEndScreen();
+        }
+    }
+
+    showEndScreen() {
+        this.shadowRoot.innerHTML = `
+            <div class="question-container">
+                <h2>${t('questions-wait-to-finish')}</h2>
+            </div>
+        `;
     }
 }
 

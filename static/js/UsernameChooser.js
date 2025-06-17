@@ -9,15 +9,25 @@ class UsernameChooser extends HTMLElement {
     }
 
     async connectedCallback() {
-        // Wait for i18next to be initialized
-        await i18nPromise;
-        this.render();
-        this.addEventListeners();
-        // Listen for i18next language changes
-        i18next.on('languageChanged', () => {
+        try {
+            // Wait for i18next to be initialized
+            await i18nPromise;
+            
+            // Ensure translations are loaded by triggering a language change
+            const currentLang = i18next.language;
+            await i18next.changeLanguage(currentLang);
+            
             this.render();
-            this.addEventListeners(); // Re-add event listeners after re-render
-        });
+            this.addEventListeners();
+            
+            // Listen for i18next language changes
+            i18next.on('languageChanged', () => {
+                this.render();
+                this.addEventListeners(); // Re-add event listeners after re-render
+            });
+        } catch (error) {
+            console.error('Error initializing translations:', error);
+        }
     }
 
     disconnectedCallback() {
@@ -26,6 +36,12 @@ class UsernameChooser extends HTMLElement {
     }
 
     render() {
+        // Ensure translations are available before rendering
+        if (!i18next.isInitialized) {
+            console.warn('i18next not initialized yet');
+            return;
+        }
+
         this.shadowRoot.innerHTML = `
             <style>
                 .username-container {
@@ -79,9 +95,9 @@ class UsernameChooser extends HTMLElement {
             }
             errorMessage.style.display = 'none';
             this.socket.emit('action:username', username);
-            sessionStorage.setItem('username', username);
+            localStorage.setItem('username', username);
             document.querySelector('#username').innerHTML = username;
-            this.remove();
+            document.querySelector('main').innerHTML = `<p id="waitingForStart">${t('waitingForStart')}</p>`;
         });
 
         input.addEventListener('keypress', (e) => {

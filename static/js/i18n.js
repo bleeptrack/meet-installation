@@ -7,7 +7,8 @@ const i18nPromise = i18next
   .use(Backend)
   .use(LanguageDetector)
   .init({
-    fallbackLng: 'en',
+    fallbackLng: 'en-US',
+    lng: 'en-US',
     debug: true,
     backend: {
       loadPath: '/translations/{{lng}}.json',
@@ -22,7 +23,16 @@ const i18nPromise = i18next
       lookupCookie: 'i18next',
       lookupSessionStorage: 'i18nextLng',
       caches: ['sessionStorage', 'cookie']
-    }
+    },
+    // Ensure translations are loaded immediately
+    initImmediate: false,
+    load: 'languageOnly',
+    // Configure language fallbacks
+    fallbackLng: {
+      'default': ['en-US']
+    },
+    // Disable loading of fallback languages
+    load: 'currentOnly'
   });
 
 // Function to change language

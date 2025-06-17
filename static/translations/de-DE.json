@@ -49,5 +49,8 @@
       "a3": "vielleicht"
     }
   ],
-  "congratulations": "Glückwunsch! Du hast ein Match!"
+  "congratulations": "Glückwunsch! Du hast ein Match!",
+  "questions-wait-to-finish": "Bitte warte bis alle ihre Fragen beantwortet haben...",
+  "tarotCardText": "Diese ID wird dich durch die Nacht führen. Bewahre sie gut auf!",
+  "downloadCard": "Karte herunterladen"
 } 
