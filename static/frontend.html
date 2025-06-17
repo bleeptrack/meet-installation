@@ -2,8 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#ff69b4">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lavishly+Yours&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Lavishly+Yours&display=swap" rel="stylesheet">
     <title>Localized Website</title>
+    <link rel="stylesheet" href="/styles.css">
     <script src="/socket.io/socket.io.js"></script>
     <script type="importmap">
     {
@@ -20,23 +28,52 @@
     <script type="module" src="/js/Questions.js"></script>
     <script type="module" src="/js/TarotCard.js"></script>
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 0;
+            box-sizing: border-box;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-        .content {
-            margin-top: 20px;
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 10px;
+        }
+        #username {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            padding: 5px;
+        }
+        main {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 40px;
         }
     </style>
 </head>
 <body>
-    <language-switcher></language-switcher>
-    <div id="username"></div>
-    <main>
-        <p id="waitingForStart">Just a moment...</p>
-    </main>
+    <div class="container">
+        <language-switcher></language-switcher>
+        <div id="username"></div>
+        <main>
+            <h2 id="waitingForStart">Just a moment...</h2>
+        </main>
+    </div>
 
     <script type="module">
         import i18next from 'i18next';
@@ -106,7 +143,7 @@
                 console.log("Current player:", currentPlayer);
                 const groupId = currentPlayer.groupId;
                 const groupLetter = String.fromCharCode(65 + groupId); // Convert 0 to 'A', 1 to 'B', etc.
-                document.querySelector('main').innerHTML = `<p>Group ${groupLetter}</p>`;
+                document.querySelector('main').innerHTML = `<h2><span id="group-label">${t('group')}</span> ${groupLetter}</h2>`;
                 localStorage.setItem('lastPhase', 'grouping');
             });
 
@@ -121,7 +158,12 @@
 
             // Update translations when language changes
             window.addEventListener('languageChanged', (event) => {
-                document.querySelector('#waitingForStart').textContent = t('waitingForStart');
+                if(document.querySelector('#waitingForStart')) {
+                    document.querySelector('#waitingForStart').textContent = t('waitingForStart');
+                }
+                if(document.querySelector('#group-label')) {
+                    document.querySelector('#group-label').textContent = t('group');
+                }
             });
         }).catch(error => {
             console.error('Failed to initialize i18next:', error);

@@ -1,3 +1,5 @@
+import { sharedStyles } from './shared-styles.js';
+
 class PlayerOverview extends HTMLElement {
     constructor() {
         super();
@@ -45,6 +47,7 @@ class PlayerOverview extends HTMLElement {
     render() {
         this.shadowRoot.innerHTML = `
             <style>
+                ${sharedStyles}
                 .player-list {
                     list-style: none;
                     padding: 0;

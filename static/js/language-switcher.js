@@ -1,3 +1,4 @@
+import i18next from 'i18next';
 import { changeLanguage, t, i18nPromise } from './i18n.js';
 
 class LanguageSwitcher extends HTMLElement {
@@ -17,21 +18,35 @@ class LanguageSwitcher extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>
         .language-switcher {
-          display: flex;
-          align-items: center;
-          gap: 10px;
+          position: fixed;
+          top: 10px;
+          right: 10px;
+          z-index: 1000;
         }
         select {
+          appearance: none;
+          background: transparent;
+          border: none;
+          font-size: 24px;
+          cursor: pointer;
           padding: 5px;
-          border-radius: 4px;
-          border: 1px solid #ccc;
+          outline: none;
+          width: 100%;
+          height: 100%;
+        }
+        select option {
+          font-size: 24px;
+          padding: 5px;
+          background: transparent;
+        }
+        select:hover {
+          opacity: 0.8;
         }
       </style>
       <div class="language-switcher">
-        <span>${t('language')}:</span>
         <select>
-          <option value="en-US">English</option>
-          <option value="de-DE">Deutsch</option>
+          <option value="en-US">🇺🇸</option>
+          <option value="de-DE">🇩🇪</option>
         </select>
       </div>
     `;
@@ -39,6 +54,10 @@ class LanguageSwitcher extends HTMLElement {
 
   addEventListeners() {
     const select = this.shadowRoot.querySelector('select');
+    
+    // Set initial value
+    select.value = i18next.language;
+    
     select.addEventListener('change', (e) => {
       changeLanguage(e.target.value);
     });

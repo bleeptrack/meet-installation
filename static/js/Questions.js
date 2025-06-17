@@ -1,5 +1,6 @@
 import i18next from 'i18next';
 import { t, i18nPromise } from '/js/i18n.js';
+import { sharedStyles } from './shared-styles.js';
 
 class Questions extends HTMLElement {
     constructor() {
@@ -45,48 +46,48 @@ class Questions extends HTMLElement {
         }
         this.shadowRoot.innerHTML = `
             <style>
+                ${sharedStyles}
+                :host {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    width: 100%;
+                    min-height: 100%;
+                }
                 .question-container {
-                    max-width: 600px;
-                    margin: 0 auto;
-                    padding: 20px;
+                    
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
                 }
                 .question {
-                    font-size: 20px;
+                    font-size: clamp(18px, 5vw, 24px);
                     margin-bottom: 20px;
+                    line-height: 1.4;
+                    text-align: center;
+                    width: 100%;
                 }
                 .options {
                     display: flex;
                     flex-direction: column;
-                    gap: 10px;
-                }
-                button {
-                    padding: 10px 20px;
-                    font-size: 16px;
-                    background-color: #4CAF50;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    text-align: left;
-                }
-                button:hover {
-                    background-color: #45a049;
-                }
-                button:disabled {
-                    background-color: #cccccc;
-                    cursor: not-allowed;
+                    gap: 12px;
+                    max-width: 500px;
                 }
                 .feedback {
                     margin-top: 20px;
-                    padding: 10px;
-                    border-radius: 4px;
+                    padding: 15px;
+                    border-radius: 8px;
                     display: none;
-                    background-color: #f8f9fa;
+                    background-color: rgba(248, 249, 250, 0.9);
                     color: #333;
+                    font-size: 16px;
+                    line-height: 1.5;
                 }
                 .next-button {
                     margin-top: 20px;
                     display: none;
+                 
                 }
             </style>
             <div class="question-container">

@@ -1,4 +1,6 @@
-import { t } from '/js/i18n.js';
+import i18next from 'i18next';
+import { t, i18nPromise } from '/js/i18n.js';
+import { sharedStyles } from '/js/shared-styles.js';
 
 class TarotCard extends HTMLElement {
     constructor() {
@@ -10,8 +12,20 @@ class TarotCard extends HTMLElement {
         return ['number'];
     }
 
-    connectedCallback() {
+    async connectedCallback() {
+        // Wait for i18next to be initialized
+        await i18nPromise;
         this.render();
+
+        // Listen for i18next language changes
+        i18next.on('languageChanged', () => {
+            this.render();
+        });
+    }
+
+    disconnectedCallback() {
+        // Clean up event listener when component is removed
+        i18next.off('languageChanged');
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -26,24 +40,40 @@ class TarotCard extends HTMLElement {
 
         this.shadowRoot.innerHTML = `
             <style>
+                ${sharedStyles}
                 :host {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
+                    justify-content: center;
                     width: 100%;
-                    height: 100%;
+                    min-height: 100%;
+                    overflow-x: hidden;
+                    box-sizing: border-box;
                 }
                 .card-container {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
+                    justify-content: center;
                     width: 100%;
-                    height: 100%;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                    text-align: center;
+                    box-sizing: border-box;
                 }
                 .image {
                     max-width: 100%;
                     max-height: 80vh;
                     object-fit: contain;
+                    margin: 20px 0;
+                }
+                .text {
+                    font-size: 1rem
+                    line-height: 1.5;
+                    margin: 10px 0;
+                    width: 100%;
                 }
                 .placeholder {
                     width: 200px;
@@ -59,14 +89,13 @@ class TarotCard extends HTMLElement {
                     color: #333;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                 }
-                .download-link {
-                    margin-top: 1rem;
-                    color: #2196F3;
-                    text-decoration: none;
-                    font-size: 1rem;
-                }
-                .download-link:hover {
-                    text-decoration: underline;
+                @media (max-width: 768px) {
+                    .card-container {
+                        padding: 15px;
+                    }
+                    .image {
+                        max-height: 60vh;
+                    }
                 }
             </style>
             <div class="card-container">

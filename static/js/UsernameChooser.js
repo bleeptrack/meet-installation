@@ -1,5 +1,6 @@
 import i18next from 'i18next';
 import { t, i18nPromise } from '/js/i18n.js';
+import { sharedStyles } from './shared-styles.js';
 
 class UsernameChooser extends HTMLElement {
     constructor() {
@@ -44,6 +45,7 @@ class UsernameChooser extends HTMLElement {
 
         this.shadowRoot.innerHTML = `
             <style>
+                ${sharedStyles}
                 .username-container {
                     display: flex;
                     flex-direction: column;
@@ -55,18 +57,6 @@ class UsernameChooser extends HTMLElement {
                     font-size: 16px;
                     border: 1px solid #ccc;
                     border-radius: 4px;
-                }
-                button {
-                    padding: 10px 20px;
-                    font-size: 16px;
-                    background-color: #4CAF50;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    cursor: pointer;
-                }
-                button:hover {
-                    background-color: #45a049;
                 }
                 .error {
                     color: red;
@@ -97,7 +87,7 @@ class UsernameChooser extends HTMLElement {
             this.socket.emit('action:username', username);
             localStorage.setItem('username', username);
             document.querySelector('#username').innerHTML = username;
-            document.querySelector('main').innerHTML = `<p id="waitingForStart">${t('waitingForStart')}</p>`;
+            document.querySelector('main').innerHTML = `<h2 id="waitingForStart">${t('waitingForStart')}</h2>`;
         });
 
         input.addEventListener('keypress', (e) => {
