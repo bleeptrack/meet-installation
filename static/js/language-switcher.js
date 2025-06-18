@@ -45,8 +45,8 @@ class LanguageSwitcher extends HTMLElement {
       </style>
       <div class="language-switcher">
         <select>
-          <option value="en-US">🇺🇸</option>
-          <option value="de-DE">🇩🇪</option>
+          <option value="en-US">EN</option>
+          <option value="de-DE">DE</option>
         </select>
       </div>
     `;
