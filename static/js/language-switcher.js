@@ -22,6 +22,7 @@ class LanguageSwitcher extends HTMLElement {
           top: 10px;
           right: 10px;
           z-index: 1000;
+          
         }
         select {
           appearance: none;
@@ -33,6 +34,7 @@ class LanguageSwitcher extends HTMLElement {
           outline: none;
           width: 100%;
           height: 100%;
+          color: white;
         }
         select option {
           font-size: 24px;
