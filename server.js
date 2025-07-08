@@ -49,6 +49,7 @@ function isUsernameTaken(username) {
   return players.some(player => player.username === username);
 }
 
+/*
 function removePlayer(socketId) {
   const username = socketToUsername.get(socketId);
   if (username) {
@@ -65,6 +66,7 @@ function removePlayer(socketId) {
     socketToUsername.delete(socketId);
   }
 }
+*/
 
 app.get('/backend', (req, res) => {
   res.sendFile(__dirname + '/static/backend.html');
@@ -82,48 +84,49 @@ io.on('connection', (socket) => {
     console.log("Username received:", username);
     
     // Check if username is already taken by another socket
-    if (isUsernameTaken(username) && usernameToSocket.get(username) !== socket.id) {
-      socket.emit('error:usernameTaken', 'This username is already taken');
-      return;
+    let player = players.find(p => p.username === username);
+    if (player) {
+      // Username is taken by another socket
+      if (player.id !== socket.id && usernameToSocket.get(username) !== socket.id) {
+        socket.emit('error:usernameTaken', 'This username is already taken');
+        return;
+      }
+      // Update socket id and set connected flag
+      player.id = socket.id;
+      player.connected = true;
+      socketToUsername.set(socket.id, username);
+      usernameToSocket.set(username, socket.id);
+    } else {
+      // Add new player
+      player = { id: socket.id, username: username, connected: true };
+      players.push(player);
+      socketToUsername.set(socket.id, username);
+      usernameToSocket.set(username, socket.id);
     }
-
-    // Remove any existing player entry for this socket
-    removePlayer(socket.id);
-    
-    // Add new player
-    const newPlayer = {
-      id: socket.id,
-      username: username
-    };
-    
-    // Restore answers if they exist
-    if (playerAnswers.has(username)) {
-      newPlayer.answers = playerAnswers.get(username);
-    }
-    
-    players.push(newPlayer);
-    
-    // Store the mappings for reconnection handling
-    socketToUsername.set(socket.id, username);
-    usernameToSocket.set(username, socket.id);
-    
     // If this player is a child, update any parent's childId to the new socket ID
-    if (newPlayer.isChild) {
+    if (player.isChild) {
       players.forEach(parent => {
         if (parent.childId && socketToUsername.get(parent.childId) === username) {
-          parent.childId = newPlayer.id;
+          parent.childId = player.id;
         }
       });
     }
-    
-    console.log("Players after adding:", players);
+    console.log("Players after adding/updating:", players);
     console.log("Emitting info:players event");
     io.emit('info:players', players);
   });
 
   socket.on('disconnect', () => {
     console.log('User disconnected');
-    removePlayer(socket.id);
+    const username = socketToUsername.get(socket.id);
+    if (username) {
+      const player = players.find(p => p.username === username);
+      if (player) {
+        player.connected = false;
+      }
+      socketToUsername.delete(socket.id);
+      usernameToSocket.delete(username);
+    }
     io.emit('info:players', players);
   });
 

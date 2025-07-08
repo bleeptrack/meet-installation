@@ -72,6 +72,20 @@ class PlayerOverview extends HTMLElement {
                     margin: 5px;
                     border-radius: 4px;
                 }
+                .status-dot {
+                    display: inline-block;
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 50%;
+                    margin-right: 6px;
+                    vertical-align: middle;
+                }
+                .status-dot.connected {
+                    background: #4CAF50;
+                }
+                .status-dot.disconnected {
+                    background: #F44336;
+                }
                 button {
                     padding: 10px 20px;
                     font-size: 16px;
@@ -155,19 +169,24 @@ class PlayerOverview extends HTMLElement {
                 );
                 assignChildUI = `
                     <select id="childSelect-${player.username}">
-                        <option value="">Select child</option>
+                        <option value="">Select Player</option>
                         ${eligibleChildren.map(child => `<option value="${child.username}">${child.username}</option>`).join('')}
                     </select>
                     <button id="confirmAssignChild-${player.username}">Confirm</button>
                     <button id="cancelAssignChild-${player.username}">Cancel</button>
                 `;
             } else if (!player.isChild && !player.childId) {
-                assignChildUI = `<button id="assignChildBtn-${player.username}">Set as Parent of...</button>`;
+                assignChildUI = `<button id="assignChildBtn-${player.username}">connect with...</button>`;
             }
+
+            // Connection status icon
+            const statusClass = player.connected ? 'connected' : 'disconnected';
+            const statusTitle = player.connected ? 'Connected' : 'Disconnected';
+            const statusDot = `<span class="status-dot ${statusClass}" title="${statusTitle}"></span>`;
 
             return `
                 <div class="player-item" style="background-color: ${color}">
-                    ${player.username} ${answerCount} ${roleLabel} ${connectionLabel}
+                    ${statusDot}${player.username} ${answerCount} ${roleLabel} ${connectionLabel}
                     ${assignChildUI}
                     ${removeConnectionBtn}
                 </div>
@@ -198,21 +217,27 @@ class PlayerOverview extends HTMLElement {
                     <h3>Group A</h3>
                     ${(groups[0] || []).map((player, index, array) => `
                         ${index > 0 && player.pairIndex !== array[index - 1].pairIndex ? '<hr style="margin: 10px 0; border: 1px dashed #ccc;">' : ''}
-                        <div class="player-item" style="background-color: ${this.getPairColor(player.pairIndex)}">${player.username}</div>
+                        <div class="player-item" style="background-color: ${this.getPairColor(player.pairIndex)}">
+                            <span class="status-dot ${player.connected ? 'connected' : 'disconnected'}" title="${player.connected ? 'Connected' : 'Disconnected'}"></span>${player.username}
+                        </div>
                     `).join('')}
                 </div>
                 <div class="group-container">
                     <h3>Group B</h3>
                     ${(groups[1] || []).map((player, index, array) => `
                         ${index > 0 && player.pairIndex !== array[index - 1].pairIndex ? '<hr style="margin: 10px 0; border: 1px dashed #ccc;">' : ''}
-                        <div class="player-item" style="background-color: ${this.getPairColor(player.pairIndex)}">${player.username}</div>
+                        <div class="player-item" style="background-color: ${this.getPairColor(player.pairIndex)}">
+                            <span class="status-dot ${player.connected ? 'connected' : 'disconnected'}" title="${player.connected ? 'Connected' : 'Disconnected'}"></span>${player.username}
+                        </div>
                     `).join('')}
                 </div>
                 <div class="group-container">
                     <h3>Group C</h3>
                     ${(groups[2] || []).map((player, index, array) => `
                         ${index > 0 && player.pairIndex !== array[index - 1].pairIndex ? '<hr style="margin: 10px 0; border: 1px dashed #ccc;">' : ''}
-                        <div class="player-item" style="background-color: ${this.getPairColor(player.pairIndex)}">${player.username}</div>
+                        <div class="player-item" style="background-color: ${this.getPairColor(player.pairIndex)}">
+                            <span class="status-dot ${player.connected ? 'connected' : 'disconnected'}" title="${player.connected ? 'Connected' : 'Disconnected'}"></span>${player.username}
+                        </div>
                     `).join('')}
                 </div>
             </div>
