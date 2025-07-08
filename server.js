@@ -76,6 +76,7 @@ app.get('/', (req, res) => {
 
 io.on('connection', (socket) => {
   console.log('A user connected');
+  io.emit('info:players', players);
   
   socket.on('action:username', (username) => {
     console.log("Username received:", username);
@@ -105,6 +106,15 @@ io.on('connection', (socket) => {
     // Store the mappings for reconnection handling
     socketToUsername.set(socket.id, username);
     usernameToSocket.set(username, socket.id);
+    
+    // If this player is a child, update any parent's childId to the new socket ID
+    if (newPlayer.isChild) {
+      players.forEach(parent => {
+        if (parent.childId && socketToUsername.get(parent.childId) === username) {
+          parent.childId = newPlayer.id;
+        }
+      });
+    }
     
     console.log("Players after adding:", players);
     console.log("Emitting info:players event");
@@ -144,57 +154,89 @@ io.on('connection', (socket) => {
   });
 
   socket.on('action:startResults', () => {
-    currentOrder = "results"
-    // Shuffle players array in place using Fisher-Yates algorithm
-    for (let i = players.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [players[i], players[j]] = [players[j], players[i]];
-    }
-    // Group players into pairs and add pair index
-    const pairSize = 2
-    const numPairs = Math.ceil(players.length / pairSize);
-    
-    for (let i = 0; i < players.length; i++) {
-        players[i].pairIndex = Math.floor(i / pairSize);
-    }
-    // Find a player that is the only one with their pairIndex
-    const pairCounts = new Map();
+    currentOrder = "results";
+
+    // 1. Build units: parent-child as one unit, others as single units
+    const units = [];
+    const usedIds = new Set();
     players.forEach(player => {
-        pairCounts.set(player.pairIndex, (pairCounts.get(player.pairIndex) || 0) + 1);
+      if (player.childId && !usedIds.has(player.id) && !usedIds.has(player.childId)) {
+        const child = players.find(p => p.id === player.childId);
+        if (child) {
+          units.push([player, child]);
+          usedIds.add(player.id);
+          usedIds.add(child.id);
+        }
+      } else if (!player.isChild && !usedIds.has(player.id)) {
+        units.push([player]);
+        usedIds.add(player.id);
+      }
     });
-    
-    const lonePlayer = players.find(player => pairCounts.get(player.pairIndex) === 1);
-    if (lonePlayer) {
-        console.log("Found lone player:", lonePlayer.username);
-        lonePlayer.pairIndex = 0;
+
+    // 2. Pairing: shuffle units, pair in twos (last group of three if odd)
+    const shuffledUnits = [...units];
+    for (let i = shuffledUnits.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledUnits[i], shuffledUnits[j]] = [shuffledUnits[j], shuffledUnits[i]];
+    }
+    let pairIndex = 0;
+    for (let i = 0; i < shuffledUnits.length; ) {
+      const group = [];
+      group.push(...shuffledUnits[i]);
+      if (i + 1 < shuffledUnits.length) {
+        group.push(...shuffledUnits[i + 1]);
+        i += 2;
+      } else {
+        i += 1;
+      }
+      group.forEach(p => p.pairIndex = pairIndex);
+      pairIndex++;
     }
 
-    // Assign group IDs (0, 1, or 2) to pairs while keeping pairs together
-    const numGroups = 3;
-    const pairs = new Map();
-    
-    // First, group players by their pair index
-    players.forEach(player => {
-        if (!pairs.has(player.pairIndex)) {
-            pairs.set(player.pairIndex, []);
-        }
-        pairs.get(player.pairIndex).push(player);
-    });
-    
-    // Assign group IDs to pairs
-    let groupId = 0;
-    for (const [pairIndex, pairPlayers] of pairs) {
-        // Assign the same group ID to all players in the pair
-        pairPlayers.forEach(player => {
-            player.groupId = groupId;
-        });
-        groupId = (groupId + 1) % numGroups;
+    // 3. Grouping: shuffle units again, assign to 3 groups round-robin
+    const groupShuffledUnits = [...units];
+    for (let i = groupShuffledUnits.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [groupShuffledUnits[i], groupShuffledUnits[j]] = [groupShuffledUnits[j], groupShuffledUnits[i]];
     }
-    sendNextOrder("results")
+    const numGroups = 3;
+    let groupId = 0;
+    groupShuffledUnits.forEach(unit => {
+      unit.forEach(p => p.groupId = groupId);
+      groupId = (groupId + 1) % numGroups;
+    });
+
+    sendNextOrder("results");
   });
 
   socket.on('action:startGrouping', () => {
     sendNextOrder("grouping")
+  });
+
+  socket.on('action:assignParentChild', ({ parentUsername, childUsername }) => {
+    const parent = players.find(p => p.username === parentUsername);
+    const child = players.find(p => p.username === childUsername);
+    if (parent && child) {
+      parent.childId = child.id;
+      child.isChild = true;
+      io.emit('info:players', players);
+    } else {
+      socket.emit('error:assignParentChild', 'Parent or child not found');
+    }
+  });
+
+  socket.on('action:removeParentChild', ({ parentUsername }) => {
+    const parent = players.find(p => p.username === parentUsername);
+    if (parent && parent.childId) {
+      const child = players.find(p => p.id === parent.childId);
+      if (child) {
+        delete child.isChild;
+      }
+      delete parent.childId;
+      io.emit('info:players', players);
+    } else {
+      socket.emit('error:removeParentChild', 'Parent or connection not found');
+    }
   });
 });
 

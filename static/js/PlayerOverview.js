@@ -5,6 +5,7 @@ class PlayerOverview extends HTMLElement {
         super();
         this.attachShadow({ mode: 'open' });
         this.players = [];
+        this.assigningChildFor = null; // Track which parent is assigning a child
         console.log('Window socket before assignment:', window.socket);
         this.socket = window.socket; // Use the global socket instance
         console.log('Socket after assignment:', this.socket);
@@ -15,6 +16,7 @@ class PlayerOverview extends HTMLElement {
             console.error('Socket is not available!');
             return;
         }
+
         
         // Add socket connection status listeners
         this.socket.on('connect', () => {
@@ -121,8 +123,54 @@ class PlayerOverview extends HTMLElement {
         return this.players.map(player => {
             const answerCount = player.answers ? player.answers.length : 0;
             const color = answerCount >= 5 ? this.getPairColor(11) : this.getPairColor(0);
+
+            // Show if player is parent or child
+            let roleLabel = '';
+            let connectionLabel = '';
+            let removeConnectionBtn = '';
+            if (player.childId) {
+                roleLabel = ' (Connection)';
+                // Find the child username
+                const child = this.players.find(p => p.id === player.childId);
+                if (child) {
+                    connectionLabel = ` &rarr;  ${child.username}`;
+                    removeConnectionBtn = `<button id="removeConnectionBtn-${player.username}">Remove Connection</button>`;
+                }
+            }
+            if (player.isChild) {
+                roleLabel = ' (Connection)';
+                // Find the parent username
+                const parent = this.players.find(p => p.childId === player.id);
+                if (parent) {
+                    connectionLabel = ` &larr;  ${parent.username}`;
+                }
+            }
+
+            // Show dropdown if assigning child for this player
+            let assignChildUI = '';
+            if (this.assigningChildFor === player.username) {
+                // List all players who are not this player and not already a child
+                const eligibleChildren = this.players.filter(
+                    p => p.username !== player.username && !p.isChild
+                );
+                assignChildUI = `
+                    <select id="childSelect-${player.username}">
+                        <option value="">Select child</option>
+                        ${eligibleChildren.map(child => `<option value="${child.username}">${child.username}</option>`).join('')}
+                    </select>
+                    <button id="confirmAssignChild-${player.username}">Confirm</button>
+                    <button id="cancelAssignChild-${player.username}">Cancel</button>
+                `;
+            } else if (!player.isChild && !player.childId) {
+                assignChildUI = `<button id="assignChildBtn-${player.username}">Set as Parent of...</button>`;
+            }
+
             return `
-                <div class="player-item" style="background-color: ${color}">${player.username} ${answerCount}</div>
+                <div class="player-item" style="background-color: ${color}">
+                    ${player.username} ${answerCount} ${roleLabel} ${connectionLabel}
+                    ${assignChildUI}
+                    ${removeConnectionBtn}
+                </div>
             `;
         }).join('');
     }
@@ -196,6 +244,47 @@ class PlayerOverview extends HTMLElement {
 
         startGroupingButton.addEventListener('click', () => {
             this.socket.emit('action:startGrouping');
+        });
+
+        this.players.forEach(player => {
+            if (!player.isChild) {
+                const assignBtn = this.shadowRoot.querySelector(`#assignChildBtn-${player.username}`);
+                if (assignBtn) {
+                    assignBtn.addEventListener('click', () => {
+                        this.assigningChildFor = player.username;
+                        this.render();
+                    });
+                }
+                const confirmBtn = this.shadowRoot.querySelector(`#confirmAssignChild-${player.username}`);
+                if (confirmBtn) {
+                    confirmBtn.addEventListener('click', () => {
+                        const select = this.shadowRoot.querySelector(`#childSelect-${player.username}`);
+                        const childUsername = select.value;
+                        if (childUsername) {
+                            this.socket.emit('action:assignParentChild', {
+                                parentUsername: player.username,
+                                childUsername
+                            });
+                            this.assigningChildFor = null;
+                            this.render();
+                        }
+                    });
+                }
+                const cancelBtn = this.shadowRoot.querySelector(`#cancelAssignChild-${player.username}`);
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => {
+                        this.assigningChildFor = null;
+                        this.render();
+                    });
+                }
+            }
+            // Remove connection button for parents
+            const removeBtn = this.shadowRoot.querySelector(`#removeConnectionBtn-${player.username}`);
+            if (removeBtn) {
+                removeBtn.addEventListener('click', () => {
+                    this.socket.emit('action:removeParentChild', { parentUsername: player.username });
+                });
+            }
         });
     }
 }
