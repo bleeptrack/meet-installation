@@ -103,29 +103,31 @@ class Questions extends HTMLElement {
                     min-width: 80%;
                     margin: 0 auto;
                     display: block;
-                    min-height: 64px;
-                    padding: 20px 40px;
+                    min-height: 8vh;
+                    padding: 2vh 4vw;
                     border-radius: 30px;
                     transition: min-height 1s ease, padding 1s ease, border-radius 1s ease, background-color 1s ease, color 1s ease, box-shadow 1s ease;
                 }
                 button.showing-feedback {
-                    min-height: 200px;
+                    min-height: 60vh;
                     font-size: 22px;
                     line-height: 1.5;
-                    padding: 36px;
-                    animation: buttonGrow 1s ease-out;
+                    padding: 6vh 8vw;
+                    
                     border-radius: 32px;
                     background-color: #fff;
                     color: #111;
                     box-shadow: 0 8px 40px 0 rgba(0,0,0,0.13), 0 2px 8px 0 rgba(0,0,0,0.10);
                 }
-                @keyframes buttonGrow {
-                    from {
-                        transform: scale(1);
-                    }
-                    to {
-                        transform: scale(1.02);
-                    }
+                .options.hide-others button:not(.showing-feedback) {
+                    opacity: 0;
+                    border: none;
+                    pointer-events: none;
+                    padding: 0;
+                    height: 0px;
+                    min-height: 0px;
+                    overflow: hidden;
+                    transition: opacity 1s ease, height 1s ease, padding 1s ease, border 1s ease;
                 }
                 .options {
                     display: flex;
@@ -181,6 +183,10 @@ class Questions extends HTMLElement {
                     button.textContent = t(`questions.${this.currentQuestion}.${feedbackKey}`);
                     button.classList.add('showing-feedback');
                 }
+
+                // Hide other buttons
+                const optionsContainer = this.shadowRoot.querySelector('.options');
+                optionsContainer.classList.add('hide-others');
 
                 // Disable all option buttons after answering
                 buttons.forEach(btn => btn.disabled = true);
