@@ -181,16 +181,18 @@ class Questions extends HTMLElement {
                 const feedbackKey = `a${selectedIndex + 1}-feedback`;
                 if (question[feedbackKey]) {
                     button.textContent = t(`questions.${this.currentQuestion}.${feedbackKey}`);
-                    button.classList.add('showing-feedback');
+                    
+                } else {
+                    // If no feedback, just disable all buttons without visual changes
+                    buttons.forEach(btn => btn.disabled = true);
                 }
-
-                // Hide other buttons
+                    
+                button.classList.add('showing-feedback');
+                // Still hide other buttons
                 const optionsContainer = this.shadowRoot.querySelector('.options');
                 optionsContainer.classList.add('hide-others');
-
-                // Disable all option buttons after answering
-                buttons.forEach(btn => btn.disabled = true);
                 
+
                 // Show next button
                 nextButton.classList.add('visible');
             });
