@@ -4,6 +4,7 @@ export const sharedStyles = `
         font-size: 1.5rem;
     }
     button, .button, .download-link {
+        width: 80%;
         padding: 20px 40px;
         background-color: white;
         color: black;

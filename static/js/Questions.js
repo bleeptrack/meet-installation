@@ -56,7 +56,7 @@ class Questions extends HTMLElement {
                     min-height: 100%;
                 }
                 .question-container {
-                    
+                    width: 100%;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
@@ -68,12 +68,6 @@ class Questions extends HTMLElement {
                     text-align: center;
                     width: 100%;
                 }
-                .options {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                    max-width: 500px;
-                }
                 .feedback {
                     margin-top: 20px;
                     padding: 15px;
@@ -83,11 +77,72 @@ class Questions extends HTMLElement {
                     color: #333;
                     font-size: 16px;
                     line-height: 1.5;
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    z-index: 1000;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    min-width: 80%;
+                    min-height: 80%;
+                    overflow-y: auto;
+                    animation: feedbackGrow 0.5s ease-out;
+                }
+                @keyframes feedbackGrow {
+                    from {
+                        opacity: 0;
+                        transform: translate(var(--start-x), var(--start-y)) scale(0.1);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translate(-50%, -50%) scale(1);
+                    }
+                }
+                button {
+                    width: 100%;
+                    min-width: 80%;
+                    margin: 0 auto;
+                    display: block;
+                    min-height: 64px;
+                    padding: 20px 40px;
+                    border-radius: 30px;
+                    transition: min-height 1s ease, padding 1s ease, border-radius 1s ease, background-color 1s ease, color 1s ease, box-shadow 1s ease;
+                }
+                button.showing-feedback {
+                    min-height: 200px;
+                    font-size: 22px;
+                    line-height: 1.5;
+                    padding: 36px;
+                    animation: buttonGrow 1s ease-out;
+                    border-radius: 32px;
+                    background-color: #fff;
+                    color: #111;
+                    box-shadow: 0 8px 40px 0 rgba(0,0,0,0.13), 0 2px 8px 0 rgba(0,0,0,0.10);
+                }
+                @keyframes buttonGrow {
+                    from {
+                        transform: scale(1);
+                    }
+                    to {
+                        transform: scale(1.02);
+                    }
+                }
+                .options {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                    width: 80%;
+                    position: relative;
                 }
                 .next-button {
                     margin-top: 20px;
-                    display: none;
-                 
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: opacity 0.3s ease, visibility 0.3s ease;
+                }
+                .next-button.visible {
+                    opacity: 1;
+                    visibility: visible;
                 }
             </style>
             <div class="question-container">
@@ -99,7 +154,6 @@ class Questions extends HTMLElement {
                             <button data-index="${key.substring(1) - 1}">${t(`questions.${this.currentQuestion}.${key}`)}</button>
                         `).join('')}
                 </div>
-                <div class="feedback"></div>
                 <button class="next-button">${t('buttons.nextQuestion')}</button>
             </div>
         `;
@@ -110,10 +164,9 @@ class Questions extends HTMLElement {
         const nextButton = this.shadowRoot.querySelector('.next-button');
         
         buttons.forEach(button => {
-            button.addEventListener('click', () => {
+            button.addEventListener('click', (event) => {
                 const selectedIndex = parseInt(button.dataset.index);
                 const question = this.questions[this.currentQuestion];
-                const feedback = this.shadowRoot.querySelector('.feedback');
                 
                 // Send answer to server
                 this.socket.emit('info:answer', {
@@ -125,15 +178,15 @@ class Questions extends HTMLElement {
                 // Only show feedback if it exists for this answer
                 const feedbackKey = `a${selectedIndex + 1}-feedback`;
                 if (question[feedbackKey]) {
-                    feedback.textContent = t(`questions.${this.currentQuestion}.${feedbackKey}`);
-                    feedback.style.display = "block";
+                    button.textContent = t(`questions.${this.currentQuestion}.${feedbackKey}`);
+                    button.classList.add('showing-feedback');
                 }
 
                 // Disable all option buttons after answering
                 buttons.forEach(btn => btn.disabled = true);
                 
                 // Show next button
-                nextButton.style.display = "block";
+                nextButton.classList.add('visible');
             });
         });
 
