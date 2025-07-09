@@ -22,6 +22,7 @@ currentOrder = "waiting"
 const socketToUsername = new Map();
 const usernameToSocket = new Map();
 const playerAnswers = new Map(); // Store answers by username
+let currentSessionToken = null; // Store the current session token
 
 function startNewSession() {
   console.log("Starting new session");
@@ -30,9 +31,16 @@ function startNewSession() {
   socketToUsername.clear();
   usernameToSocket.clear();
   playerAnswers.clear(); // Clear stored answers
+  
+  // Generate new session token
+  currentSessionToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  console.log("New session token:", currentSessionToken);
+  
   console.log("Sending order", currentOrder)
   io.emit(`order:${currentOrder}`)
   io.emit('info:players', players);
+  io.emit('session:token', currentSessionToken); // Send token to all clients
+  io.emit('session:new', currentSessionToken); // Signal new session to clear old tokens
 }
 
 function sendNextOrder(name) {
@@ -80,17 +88,23 @@ io.on('connection', (socket) => {
   console.log('A user connected');
   io.emit('info:players', players);
   
-  socket.on('action:username', (username) => {
-    console.log("Username received:", username);
+  socket.on('action:username', (data) => {
+    console.log("Username received:", data);
+    
+    // Extract username and token from data
+    const username = typeof data === 'string' ? data : data.username;
+    const token = typeof data === 'string' ? null : data.token;
+    
+    // Check if token is valid for current session
+    if (token !== currentSessionToken) {
+      socket.emit('error:invalidToken', 'Invalid or missing session token. Please refresh the page.');
+      return;
+    }
     
     // Check if username is already taken by another socket
     let player = players.find(p => p.username === username);
     if (player) {
-      // Username is taken by another socket
-      if (player.id !== socket.id && usernameToSocket.get(username) !== socket.id) {
-        socket.emit('error:usernameTaken', 'This username is already taken');
-        return;
-      }
+      
       // Update socket id and set connected flag
       player.id = socket.id;
       player.connected = true;

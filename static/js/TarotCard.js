@@ -70,7 +70,7 @@ class TarotCard extends HTMLElement {
                     margin: 20px 0;
                 }
                 .text {
-                    font-size: 1rem
+                    font-size: 1rem;
                     line-height: 1.5;
                     margin: 10px 0;
                     width: 100%;

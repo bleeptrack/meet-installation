@@ -21,6 +21,14 @@ class UsernameChooser extends HTMLElement {
             this.render();
             this.addEventListeners();
             
+            // Listen for session token
+            this.socket.on('session:token', (token) => {
+                if(!localStorage.getItem('sessionToken')) {
+                    localStorage.setItem('sessionToken', token);
+                    console.log('Received session token:', token);
+                }
+            });
+            
             // Listen for i18next language changes
             i18next.on('languageChanged', () => {
                 this.render();
@@ -84,7 +92,16 @@ class UsernameChooser extends HTMLElement {
                 return;
             }
             errorMessage.style.display = 'none';
-            this.socket.emit('action:username', username);
+            
+            // Get session token from localStorage
+            const sessionToken = localStorage.getItem('sessionToken');
+            
+            // Send username with session token
+            this.socket.emit('action:username', {
+                username: username,
+                token: sessionToken
+            });
+            
             localStorage.setItem('username', username);
             document.querySelector('#username').innerHTML = username;
             document.querySelector('main').innerHTML = `<h2 id="waitingForStart">${t('waitingForStart')}</h2>`;
@@ -98,6 +115,11 @@ class UsernameChooser extends HTMLElement {
 
         this.socket.on('error:usernameTaken', () => {
             errorMessage.textContent = t('errors.usernameTaken');
+            errorMessage.style.display = 'block';
+        });
+
+        this.socket.on('error:invalidToken', (message) => {
+            errorMessage.textContent = message || 'Invalid session token. Please refresh the page.';
             errorMessage.style.display = 'block';
         });
     }

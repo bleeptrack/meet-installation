@@ -88,7 +88,15 @@
                 // If we have a stored username, automatically reconnect with it
                 const storedUsername = localStorage.getItem('username');
                 if (storedUsername) {
-                    window.socket.emit('action:username', storedUsername);
+                    // Get session token from localStorage
+                    const sessionToken = localStorage.getItem('sessionToken');
+                    
+                    // Send username with session token
+                    window.socket.emit('action:username', {
+                        username: storedUsername,
+                        token: sessionToken
+                    });
+                    
                     // Restore the last phase if it exists
                     const lastPhase = localStorage.getItem('lastPhase');
                     if (lastPhase) {
@@ -146,6 +154,18 @@
             // Clear phase when starting a new session
             window.socket.on('order:waiting', () => {
                 localStorage.removeItem('lastPhase');
+            });
+
+            // Clear old session token when new session starts
+            window.socket.on('session:new', (newToken) => {
+                console.log('New session started');
+                let oldToken = localStorage.getItem('sessionToken');
+                console.log('Old token:', oldToken);
+                console.log('New token:', newToken);
+                if(oldToken && oldToken !== newToken) {
+                    console.log('Session ended');
+                    document.querySelector('main').innerHTML = '<h2>Session ended. Thank you for participating!</h2>';
+                }
             });
 
             if (localStorage.getItem('username')) {
