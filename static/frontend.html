@@ -122,6 +122,7 @@
                 console.log("Received order:username");
                 document.querySelector('main').innerHTML = '<username-chooser></username-chooser>';
                 localStorage.setItem('lastPhase', 'username');
+                localStorage.removeItem('currentQuestion');
             });
 
             window.socket.on('order:questions', () => {
@@ -167,6 +168,7 @@
                     document.querySelector('main').innerHTML = '<h2>Session ended. Thank you for participating!</h2>';
                     localStorage.removeItem('username');
                     localStorage.removeItem('sessionToken');
+                    localStorage.removeItem('currentQuestion');
                 }
             });
 
