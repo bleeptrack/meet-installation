@@ -93,13 +93,9 @@ class UsernameChooser extends HTMLElement {
             }
             errorMessage.style.display = 'none';
             
-            // Get session token from localStorage
-            const sessionToken = localStorage.getItem('sessionToken');
-            
-            // Send username with session token
+            // Do NOT send session token with username anymore
             this.socket.emit('action:username', {
-                username: username,
-                token: sessionToken
+                username: username
             });
             
             localStorage.setItem('username', username);

@@ -85,20 +85,19 @@
             
             window.socket.on('connect', () => {
                 console.log('Connected to server');
+
+                document.querySelector('#waitingForStart').innerHTML = `<username-chooser></username-chooser>`;
+                
                 // If we have a stored username, automatically reconnect with it
                 const storedUsername = localStorage.getItem('username');
                 if (storedUsername) {
-                    // Get session token from localStorage
-                    const sessionToken = localStorage.getItem('sessionToken');
-                    
-                    // Send username with session token
+                    // Do NOT send token with username anymore
                     window.socket.emit('action:username', {
-                        username: storedUsername,
-                        token: sessionToken
+                        username: storedUsername
                     });
-                    
                     // Restore the last phase if it exists
                     const lastPhase = localStorage.getItem('lastPhase');
+                    console.log("Last phase:", lastPhase);
                     if (lastPhase) {
                         switch(lastPhase) {
                             case 'questions':
@@ -120,6 +119,7 @@
             });
 
             window.socket.on('order:username', () => {
+                console.log("Received order:username");
                 document.querySelector('main').innerHTML = '<username-chooser></username-chooser>';
                 localStorage.setItem('lastPhase', 'username');
             });
@@ -165,7 +165,15 @@
                 if(oldToken && oldToken !== newToken) {
                     console.log('Session ended');
                     document.querySelector('main').innerHTML = '<h2>Session ended. Thank you for participating!</h2>';
+                    localStorage.removeItem('username');
+                    localStorage.removeItem('sessionToken');
                 }
+            });
+
+            // Store session token when received from server after username submission
+            window.socket.on('session:token', (token) => {
+                console.log('Received session token:', token);
+                localStorage.setItem('sessionToken', token);
             });
 
             if (localStorage.getItem('username')) {

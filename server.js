@@ -39,7 +39,7 @@ function startNewSession() {
   console.log("Sending order", currentOrder)
   io.emit(`order:${currentOrder}`)
   io.emit('info:players', players);
-  io.emit('session:token', currentSessionToken); // Send token to all clients
+  // io.emit('session:token', currentSessionToken); // Removed: Send token only to client after username
   io.emit('session:new', currentSessionToken); // Signal new session to clear old tokens
 }
 
@@ -91,20 +91,13 @@ io.on('connection', (socket) => {
   socket.on('action:username', (data) => {
     console.log("Username received:", data);
     
-    // Extract username and token from data
+    // Extract username from data (ignore token)
     const username = typeof data === 'string' ? data : data.username;
-    const token = typeof data === 'string' ? null : data.token;
-    
-    // Check if token is valid for current session
-    if (token !== currentSessionToken) {
-      socket.emit('error:invalidToken', 'Invalid or missing session token. Please refresh the page.');
-      return;
-    }
+    // No token validation here
     
     // Check if username is already taken by another socket
     let player = players.find(p => p.username === username);
     if (player) {
-      
       // Update socket id and set connected flag
       player.id = socket.id;
       player.connected = true;
@@ -128,6 +121,8 @@ io.on('connection', (socket) => {
     console.log("Players after adding/updating:", players);
     console.log("Emitting info:players event");
     io.emit('info:players', players);
+    // Send session token to this client only
+    socket.emit('session:token', currentSessionToken);
   });
 
   socket.on('disconnect', () => {
