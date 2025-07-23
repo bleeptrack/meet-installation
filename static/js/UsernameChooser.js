@@ -21,13 +21,6 @@ class UsernameChooser extends HTMLElement {
             this.render();
             this.addEventListeners();
             
-            // Listen for session token
-            this.socket.on('session:token', (token) => {
-                if(!localStorage.getItem('sessionToken')) {
-                    localStorage.setItem('sessionToken', token);
-                    console.log('Received session token:', token);
-                }
-            });
             
             // Listen for i18next language changes
             i18next.on('languageChanged', () => {
@@ -73,6 +66,7 @@ class UsernameChooser extends HTMLElement {
                 }
             </style>
             <div class="username-container">
+                ${this.getAttribute('username') ? `<h2>Username: ${this.getAttribute('username')}.<br>Want a different name?</h2>` : ''}
                 <input type="text" placeholder="${t('usernamePlaceholder')}" id="usernameInput">
                 <button id="submitUsername">${t('buttons.submit')}</button>
                 <div class="error" id="errorMessage">${t('errors.usernameRequired')}</div>

@@ -7,8 +7,9 @@ class Questions extends HTMLElement {
         super();
         this.attachShadow({ mode: 'open' });
         this.socket = window.socket;
-        // Load current question from localStorage or default to 0
-        this.currentQuestion = parseInt(localStorage.getItem('currentQuestion')) || 0;
+        // Load current question from attribute or default to 0
+        console.log("Questions constructor", this.getAttribute('current-question'));
+        this.currentQuestion = parseInt(this.getAttribute('current-question')) || 0;
         this.questions = null;
     }
 
@@ -109,7 +110,7 @@ class Questions extends HTMLElement {
                     transition: min-height 1s ease, padding 1s ease, border-radius 1s ease, background-color 1s ease, color 1s ease, box-shadow 1s ease;
                 }
                 button.showing-feedback {
-                    min-height: 60vh;
+                    min-height: 50vh;
                     font-size: 22px;
                     line-height: 1.5;
                     padding: 6vh 8vw;
@@ -201,8 +202,7 @@ class Questions extends HTMLElement {
         if (nextButton) {
             nextButton.addEventListener('click', () => {
                 this.currentQuestion++;
-                // Save current question to localStorage
-                localStorage.setItem('currentQuestion', this.currentQuestion);
+                this.setAttribute('current-question', this.currentQuestion);
                 this.proceedToNextQuestion();
             });
         }

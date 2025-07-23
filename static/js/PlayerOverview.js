@@ -27,6 +27,15 @@ class PlayerOverview extends HTMLElement {
             console.log('Socket disconnected');
         });
 
+        
+
+        this.socket.on('info:sessionStatus', (sessionStatus) => {
+            console.log('Received info:sessionStatus event:', sessionStatus);
+            this.sessionStatus = sessionStatus.status;
+            this.sessionToken = sessionStatus.token;
+            this.render();
+        });
+
         this.socket.on('info:players', (players) => {
             console.log('Received info:players event:', players);
             this.players = players;
@@ -38,6 +47,14 @@ class PlayerOverview extends HTMLElement {
         });
 
         this.render();
+
+        this.socket.emit("action:getPlayers", {}, (data) => {
+            console.log("Received players:", data);
+            this.players = data.players;
+            this.sessionStatus = data.sessionToken ? "started" : "ended";
+            this.sessionToken = data.sessionToken;
+            this.render();
+        });
     }
 
     disconnectedCallback() {
@@ -47,6 +64,7 @@ class PlayerOverview extends HTMLElement {
     }
 
     render() {
+        const isActive = this.sessionStatus === 'started';
         this.shadowRoot.innerHTML = `
             <style>
                 ${sharedStyles}
@@ -107,10 +125,14 @@ class PlayerOverview extends HTMLElement {
             <div class="player-list">
                 ${this.players.some(player => player.groupId !== undefined) ? this.renderGroupedPlayers() : this.renderPlayerList()}
             </div>
-            <button id="startSession">Start Session</button>
-            <button id="startQuestions">Start Questions</button>
-            <button id="startResults">Start Results</button>
-            <button id="startGrouping">Start Grouping</button>
+            <div class="session-status">
+                <p>Session Status: ${this.sessionStatus} (${this.sessionToken})</p>
+            </div>
+            <button id="startSession" ${isActive ? 'disabled' : ''}>Start Session</button>
+            <button id="startQuestions" ${!isActive ? 'disabled' : ''}>Start Questions</button>
+            <button id="startResults" ${!isActive ? 'disabled' : ''}>Start Results</button>
+            <button id="startGrouping" ${!isActive ? 'disabled' : ''}>Start Grouping</button>
+            <button id="endSession" ${!isActive ? 'disabled' : ''}>End Session</button>
         `;
         this.addEventListeners();
     }
@@ -251,12 +273,11 @@ class PlayerOverview extends HTMLElement {
         const startQuestionsButton = this.shadowRoot.querySelector('#startQuestions');
         const startResultsButton = this.shadowRoot.querySelector('#startResults');
         const startGroupingButton = this.shadowRoot.querySelector('#startGrouping');
+        const endSessionButton = this.shadowRoot.querySelector('#endSession');
         
         startSessionButton.addEventListener('click', () => {
             console.log('Starting session');
-            if (confirm('Are you sure you want to clear the session? This will remove all players and their answers.')) {
-                this.socket.emit('action:clearSession');
-            }
+            this.socket.emit('action:startSession');
         });
 
         startQuestionsButton.addEventListener('click', () => {
@@ -269,6 +290,12 @@ class PlayerOverview extends HTMLElement {
 
         startGroupingButton.addEventListener('click', () => {
             this.socket.emit('action:startGrouping');
+        });
+
+        endSessionButton.addEventListener('click', () => {
+            if (confirm('Are you sure you want to end the session? This will remove all players and their answers.')) {
+                this.socket.emit('action:endSession');
+            }
         });
 
         this.players.forEach(player => {

@@ -39,17 +39,26 @@ function startNewSession() {
   console.log("Sending order", currentOrder)
   io.emit(`order:${currentOrder}`)
   io.emit('info:players', players);
-  // io.emit('session:token', currentSessionToken); // Removed: Send token only to client after username
-  io.emit('session:new', currentSessionToken); // Signal new session to clear old tokens
+  io.emit('info:sessionStatus', {status: "started", token: currentSessionToken});
+}
+
+function endSession() {
+  console.log("Ending session");
+  players = []
+  currentOrder = ""
+  socketToUsername.clear();
+  usernameToSocket.clear();
+  playerAnswers.clear();
+  currentSessionToken = null;
+  io.emit('info:sessionStatus', {status: "ended"});
+  io.emit('info:players', players);
 }
 
 function sendNextOrder(name) {
   currentOrder = name
   console.log("Sending next order", `order:${name}`)
-  for(let player of players) {
-    console.log("Sending order to", player.id, `order:${name}`)
-    io.to(player.id).emit(`order:${name}`, players)
-  }
+
+  io.emit(`order:${name}`, players)
   io.emit('info:players', players);
 }
 
@@ -81,20 +90,37 @@ app.get('/backend', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/static/frontend.html');
+  if (currentSessionToken) {
+    res.redirect(`/playing?token=${currentSessionToken}`);
+  } else {
+    res.send(`<h1>No session running. Try again later.</h1>`);
+  }
+});
+
+app.get('/playing', (req, res) => {
+  const token = req.query.token;
+  if (token === currentSessionToken) {
+    res.sendFile(__dirname + '/static/frontend.html');
+  } else {
+    res.send('<h1>Wrong session token. Has your session ended?</h1>');
+  }
 });
 
 io.on('connection', (socket) => {
   console.log('A user connected');
   io.emit('info:players', players);
+
+  socket.on("action:getPlayers", (data, callback) => {
+    callback({players: players, currentOrder: currentOrder, sessionToken: currentSessionToken});
+  });
   
-  socket.on('action:username', (data) => {
+  socket.on('action:username', (data, callback) => {
     console.log("Username received:", data);
     
     // Extract username from data (ignore token)
     const username = typeof data === 'string' ? data : data.username;
     // No token validation here
-    
+
     // Check if username is already taken by another socket
     let player = players.find(p => p.username === username);
     if (player) {
@@ -105,24 +131,33 @@ io.on('connection', (socket) => {
       usernameToSocket.set(username, socket.id);
     } else {
       // Add new player
-      player = { id: socket.id, username: username, connected: true };
-      players.push(player);
+      player = players.find(p => p.id === socket.id);
+      if(player) {
+        player.username = username;
+        console.log("Updating player via id", player);
+      }else{
+        player = { id: socket.id, username: username, connected: true };
+        players.push(player);
+        console.log("Adding new player", player);
+      }
+      
       socketToUsername.set(socket.id, username);
       usernameToSocket.set(username, socket.id);
     }
-    // If this player is a child, update any parent's childId to the new socket ID
-    if (player.isChild) {
-      players.forEach(parent => {
-        if (parent.childId && socketToUsername.get(parent.childId) === username) {
-          parent.childId = player.id;
-        }
-      });
-    }
+    // If this player is a child, update any parent's childUsername to the new username
+    players.forEach(parent => {
+      if (parent.childUsername === username) {
+        // Optionally, update a cached childId for fast lookup
+        parent.childId = player.id;
+      }
+    });
     console.log("Players after adding/updating:", players);
     console.log("Emitting info:players event");
     io.emit('info:players', players);
     // Send session token to this client only
-    socket.emit('session:token', currentSessionToken);
+    if (callback) {
+      callback({ phase: currentOrder, player: player, players: players });
+    }
   });
 
   socket.on('disconnect', () => {
@@ -139,8 +174,12 @@ io.on('connection', (socket) => {
     io.emit('info:players', players);
   });
 
-  socket.on('action:clearSession', () => {
+  socket.on('action:startSession', () => {
     startNewSession();
+  });
+
+  socket.on('action:endSession', () => {
+    endSession();
   });
 
   socket.on('info:answer', (data) => {
@@ -229,7 +268,8 @@ io.on('connection', (socket) => {
     const parent = players.find(p => p.username === parentUsername);
     const child = players.find(p => p.username === childUsername);
     if (parent && child) {
-      parent.childId = child.id;
+      parent.childUsername = child.username;
+      parent.childId = child.id; // Optionally, for fast lookup
       child.isChild = true;
       io.emit('info:players', players);
     } else {
@@ -239,11 +279,12 @@ io.on('connection', (socket) => {
 
   socket.on('action:removeParentChild', ({ parentUsername }) => {
     const parent = players.find(p => p.username === parentUsername);
-    if (parent && parent.childId) {
-      const child = players.find(p => p.id === parent.childId);
+    if (parent && parent.childUsername) {
+      const child = players.find(p => p.username === parent.childUsername);
       if (child) {
         delete child.isChild;
       }
+      delete parent.childUsername;
       delete parent.childId;
       io.emit('info:players', players);
     } else {

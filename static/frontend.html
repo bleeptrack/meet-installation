@@ -76,7 +76,7 @@
         import { t, i18nPromise } from '/js/i18n.js';
 
         // Wait for i18next to initialize before setting up the application
-        i18nPromise.then(() => {
+        i18nPromise.then(async () => {
             // Create a single socket instance and make it available globally
             window.socket = io();
             
@@ -86,31 +86,42 @@
             window.socket.on('connect', () => {
                 console.log('Connected to server');
 
+                const token = new URLSearchParams(window.location.search).get('token');
+                if(!token) {
+                    document.querySelector('#waitingForStart').innerHTML = `<h2>No session running. Try again later.</h2>`;
+                    return;
+                }
+
+
+
                 document.querySelector('#waitingForStart').innerHTML = `<username-chooser></username-chooser>`;
                 
                 // If we have a stored username, automatically reconnect with it
                 const storedUsername = localStorage.getItem('username');
                 if (storedUsername) {
-                    // Do NOT send token with username anymore
+                    console.log("Sending username", storedUsername);
+                    document.querySelector('#username').innerHTML = storedUsername;
                     window.socket.emit('action:username', {
                         username: storedUsername
-                    });
-                    // Restore the last phase if it exists
-                    const lastPhase = localStorage.getItem('lastPhase');
-                    console.log("Last phase:", lastPhase);
-                    if (lastPhase) {
-                        switch(lastPhase) {
-                            case 'questions':
-                                document.querySelector('main').innerHTML = '<questions-component></questions-component>';
-                                break;
-                            case 'results':
-                                // We'll need to wait for the players data to show the correct card
-                                break;
-                            case 'grouping':
-                                // We'll need to wait for the players data to show the correct group
-                                break;
+                    }, (ack) => {
+                        // ack.phase and ack.player are available here
+                        // Optionally, you can use this info to update the UI or state
+                        console.log('Server acknowledged username:', ack);
+                        if(ack.phase === "questions") {
+                            let currentQuestion = 0;
+                            if(ack.player.answers){
+                                currentQuestion = ack.player.answers.length;
+                            }
+                            document.querySelector('main').innerHTML = `<questions-component current-question="${currentQuestion}"></questions-component>`;
+                        } else if(ack.phase === "results") {
+                            renderTarotCard(ack.player);
+                        } else if(ack.phase === "grouping") {
+                            renderGroup(ack.player);
+                        } else if(ack.phase === "username") {
+                            document.querySelector('#waitingForStart').innerHTML = `<username-chooser username="${ack.player.username}"></username-chooser>`;
                         }
-                    }
+                        // UI update will be handled by the order event listeners below
+                    });
                 }
             });
 
@@ -121,14 +132,11 @@
             window.socket.on('order:username', () => {
                 console.log("Received order:username");
                 document.querySelector('main').innerHTML = '<username-chooser></username-chooser>';
-                localStorage.setItem('lastPhase', 'username');
-                localStorage.removeItem('currentQuestion');
             });
 
             window.socket.on('order:questions', () => {
                 console.log("Received order:questions");
                 document.querySelector('main').innerHTML = '<questions-component></questions-component>';
-                localStorage.setItem('lastPhase', 'questions');
             });
 
             window.socket.on('order:results', (players) => {
@@ -136,9 +144,8 @@
                 const username = localStorage.getItem('username');
                 const currentPlayer = players.find(player => player.username === username);
                 console.log("Current player:", currentPlayer);
-                const pairIndex = currentPlayer.pairIndex;
-                document.querySelector('main').innerHTML = `<tarot-card image-url="https://www.tarot.com/images/cards/the-fool.jpg" text="Pair ${pairIndex}"></tarot-card>`;
-                localStorage.setItem('lastPhase', 'results');
+                renderTarotCard(currentPlayer);
+                
             });
 
             window.socket.on('order:grouping', (players) => {
@@ -146,41 +153,19 @@
                 const username = localStorage.getItem('username');
                 const currentPlayer = players.find(player => player.username === username);
                 console.log("Current player:", currentPlayer);
-                const groupId = currentPlayer.groupId;
-                const groupLetter = String.fromCharCode(65 + groupId); // Convert 0 to 'A', 1 to 'B', etc.
-                document.querySelector('main').innerHTML = `<h2><span id="group-label">${t('group')}</span> ${groupLetter}</h2>`;
-                localStorage.setItem('lastPhase', 'grouping');
+                renderGroup(currentPlayer);
             });
 
-            // Clear phase when starting a new session
-            window.socket.on('order:waiting', () => {
-                localStorage.removeItem('lastPhase');
-            });
-
-            // Clear old session token when new session starts
-            window.socket.on('session:new', (newToken) => {
-                console.log('New session started');
-                let oldToken = localStorage.getItem('sessionToken');
-                console.log('Old token:', oldToken);
-                console.log('New token:', newToken);
-                if(oldToken && oldToken !== newToken) {
-                    console.log('Session ended');
+            window.socket.on('info:sessionStatus', (sessionStatus) => {
+                console.log("Received info:sessionStatus", sessionStatus);
+                if(sessionStatus.status === "ended") {
                     document.querySelector('main').innerHTML = '<h2>Session ended. Thank you for participating!</h2>';
                     localStorage.removeItem('username');
-                    localStorage.removeItem('sessionToken');
-                    localStorage.removeItem('currentQuestion');
+                }
+                if(sessionStatus.status === "started") {
+                    document.querySelector('main').innerHTML = `<h2>Session ended. Thank you for participating!</h2>`;
                 }
             });
-
-            // Store session token when received from server after username submission
-            window.socket.on('session:token', (token) => {
-                console.log('Received session token:', token);
-                localStorage.setItem('sessionToken', token);
-            });
-
-            if (localStorage.getItem('username')) {
-                document.querySelector('#username').innerHTML = localStorage.getItem('username');
-            }
 
             // Update translations when language changes
             window.addEventListener('languageChanged', (event) => {
@@ -194,6 +179,17 @@
         }).catch(error => {
             console.error('Failed to initialize i18next:', error);
         });
+
+        function renderTarotCard(currentPlayer) {
+            const pairIndex = currentPlayer.pairIndex;
+            document.querySelector('main').innerHTML = `<tarot-card image-url="https://www.tarot.com/images/cards/the-fool.jpg" text="Pair ${pairIndex}"></tarot-card>`;
+        }
+
+        function renderGroup(currentPlayer) {
+            const groupId = currentPlayer.groupId;
+            const groupLetter = String.fromCharCode(65 + groupId); // Convert 0 to 'A', 1 to 'B', etc.
+            document.querySelector('main').innerHTML = `<h2><span id="group-label">${t('group')}</span> ${groupLetter}</h2>`;
+        }
     </script>
 </body>
 </html>
