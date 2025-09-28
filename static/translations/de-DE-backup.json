@@ -7,8 +7,7 @@
     "nextQuestion": "Nächste Frage"
   },
   "errors": {
-    "usernameRequired": "Benutzername ist erforderlich",
-    "usernameTaken": "Benutzername bereits vergeben"
+    "usernameRequired": "Benutzername ist erforderlich"
   },
   "usernamePlaceholder": "Benutzernamen eingeben",
   "waitingForStart": "Gleich geht's los...",
@@ -26,19 +25,10 @@
       "a3": "blau"
     },
     {
-      "question": "Wenn du dich für eine dieser Frisuren entscheiden müsstest - welchen Stil würdest du auswählen?",
+      "question": "Welche dieser Frisuren gefällt dir am besten?",
       "a1": "/images/frisur1.png",
       "a2": "/images/frisur2.png",
       "a3": "/images/frisur3.png"
-    },
-    {
-      "question":"Wenn du dich für eine dieser Frisuren entscheiden müsstest - welchen Stil würdest du auswählen?",
-      "a1": "/images/kim1.png",
-      "a1-feedback": "Gute Wahl! Es ist anderen Menschen allerdings nicht gestattet eine der Frisuren zu tragen.",
-      "a2": "/images/kim2.png",
-      "a2-feedback": "Gute Wahl! Es ist anderen Menschen allerdings nicht gestattet eine der Frisuren zu tragen.",
-      "a3": "/images/kim3.png",
-      "a3-feedback": "Gute Wahl! Es ist anderen Menschen allerdings nicht gestattet eine der Frisuren zu tragen."
     },
     {
       "question": "Mit welchem Transportmittel fährst du am liebsten?",
@@ -58,15 +48,6 @@
       "a3": "/images/blumen3.png",
       "a3-feedback": "Die weiße Magnolie ist die Nationalblume von Nordkorea. Die Blumenarten Kimjongilia und Kimilsungia wurden nach den beiden ersten Diktatoren benannt. Kim Jong Un hat noch keine Blume in seinem Namen."
     },
- {
-      "question": "Welcher dieser Berufe in Nordkorea, denkst du, ist am anerkanntesten?",
-      "a1": "Tänzer*in",
-      "a1-feedback": "Alle Nordkoreaner*innen werden jährlich zur Feldarbeit eingestellt, auch hohe Generäle. Ausgenommen davon sind Tänzer*innen und andere Künstler*innen.",
-      "a2": "Köchin/Koch",
-      "a2-feedback": "Alle Nordkoreaner*innen werden jährlich zur Feldarbeit eingestellt, auch hohe Generäle. Ausgenommen davon sind Tänzer*innen und andere Künstler*innen.",
-      "a3": "Schamane*in",
-      "a3-feedback": "Alle Nordkoreaner*innen werden jährlich zur Feldarbeit eingestellt, auch hohe Generäle. Ausgenommen davon sind Tänzer*innen und andere Künstler*innen."
-    },
     {
       "question": "Welches Essen macht dich am neugierigsten?",
       "a1": "/images/essen1.png",
@@ -77,13 +58,13 @@
       "a3-feedback": "Das kalte Nudelgericht Naengmyeon wird in Pjöngjang üblicherweise aus Buchweizen hergestellt. In der Hafenstadt Hamhŭng an der nordkoreanischen Ostküste werden die Nudeln hingegen aus Kartoffelstärke zubereitet."
     },
     {
-      "question": "Wann besuchten nordkoreanische Studierende zuletzt Berlin?",
-      "a1": "2020",
-      "a1-feedback": " 2020 kamen Studierende an die FU, um die deutsche Sprache und über die deutsche Essenskultur zu lernen. Seit 1952 kamen nordkoreanische Studierende (davon 10% Frauen) zum Studium in die DDR. Mehr als 20 nordkoreanische Studenten flohen von hier aus  in den Westen.",
-      "a2": "1952",
-      "a2-feedback": "2020 kamen Studierende an die FU, um die deutsche Sprache und über die deutsche Essenskultur zu lernen. Seit 1952 kamen nordkoreanische Studierende (davon 10% Frauen) zum Studium in die DDR. Mehr als 20 nordkoreanische Studenten flohen von hier aus  in den Westen.",
-      "a3": "1969",
-      "a3-feedback": "2020 kamen Studierende an die FU, um die deutsche Sprache und über die deutsche Essenskultur zu lernen. Seit 1952 kamen nordkoreanische Studierende (davon 10% Frauen) zum Studium in die DDR. Mehr als 20 nordkoreanische Studenten flohen von hier aus  in den Westen."
+      "question": "Im Jahr 2020 besuchten nordkoreanische Studierende die FU Berlin…",
+      "a1": "um Deutsch zu lernen",
+      "a1-feedback": "Seit 1952 kamen nordkoreanische Studierende (davon 10% Frauen) zum Studium in die DDR. Mehr als 20 nordkoreanische Studenten flohen von hier aus  in den Westen.",
+      "a2": "für einen Kulturaustausch",
+      "a2-feedback": "Seit 1952 kamen nordkoreanische Studierende (davon 10% Frauen) zum Studium in die DDR. Mehr als 20 nordkoreanische Studenten flohen von hier aus  in den Westen.",
+      "a3": "um zu lernen, wie man Döner zubereitet",
+      "a3-feedback": "Seit 1952 kamen nordkoreanische Studierende (davon 10% Frauen) zum Studium in die DDR. Mehr als 20 nordkoreanische Studenten flohen von hier aus  in den Westen."
     },
     {
       "question": "Wo würdest du übernachten?",
@@ -97,7 +78,7 @@
   ],
   "congratulations": "Glückwunsch! Du hast ein Match!",
   "questions-wait-to-finish": "Bitte warte bis alle ihre Fragen beantwortet haben...",
-  "tarotCardText": "Diese Karte wird dich durch die Show führen. Bewahre sie gut auf!",
+  "tarotCardText": "Diese ID wird dich durch die Nacht führen. Bewahre sie gut auf!",
   "downloadCard": "Karte herunterladen",
   "group": "Gruppe"
 } 

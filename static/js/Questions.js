@@ -1,4 +1,4 @@
-import i18next from 'i18next';
+import i18next from 'https://esm.sh/i18next@25.2.1';
 import { t, i18nPromise } from '/js/i18n.js';
 import { sharedStyles } from './shared-styles.js';
 
@@ -19,7 +19,7 @@ class Questions extends HTMLElement {
         
         // Load questions structure once
         try {
-            const response = await fetch('/translations/en-US.json');
+            const response = await fetch('/translations/de-DE.json');
             
             const data = await response.json();
          
@@ -39,6 +39,14 @@ class Questions extends HTMLElement {
         });
     }
 
+    // Helper function to render content - either text or image if URL contains /images
+    renderContent(content) {
+        if (content && content.includes('/images')) {
+            return content; // Return the URL as text, we'll handle the background image in the button rendering
+        }
+        return content;
+    }
+
     render() {
         const question = this.questions[this.currentQuestion];
         if(!question) {
@@ -54,7 +62,9 @@ class Questions extends HTMLElement {
                     align-items: center;
                     justify-content: center;
                     width: 100%;
-                    min-height: 100%;
+                    min-height: calc(100vh - 50px);
+                    min-height: calc(100svh - 50px); /* Small viewport height for mobile */
+                    padding-top: 50px;
                 }
                 .question-container {
                     width: 100%;
@@ -107,18 +117,34 @@ class Questions extends HTMLElement {
                     min-height: 8vh;
                     padding: 2vh 4vw;
                     border-radius: 30px;
-                    transition: min-height 1s ease, padding 1s ease, border-radius 1s ease, background-color 1s ease, color 1s ease, box-shadow 1s ease;
+                    transition: min-height 1s ease, padding 1s ease, border-radius 1s ease, background-color 1s ease, color 1s ease, box-shadow 1s ease, opacity 0.2s ease;
+                    background-size: contain;
+                    background-repeat: no-repeat;
+                    background-position: center;
+                    word-break: break-word;
+                    hyphens: auto;
+                }
+                button:active {
+                    opacity: 0.6 !important;
+                    transform: scale(0.98);
+                }
+                button[style*="background-image"]:active {
+                    opacity: 0.6 !important;
+                    transform: scale(0.98);
                 }
                 button.showing-feedback {
-                    min-height: 50vh;
-                    font-size: 22px;
+                    min-height: 50vh !important;
+                    font-size: 0.8rem;
                     line-height: 1.5;
-                    padding: 6vh 8vw;
+                    padding: 3vw;
                     
                     border-radius: 32px;
                     background-color: #fff;
                     color: #111;
                     box-shadow: 0 8px 40px 0 rgba(0,0,0,0.13), 0 2px 8px 0 rgba(0,0,0,0.10);
+                }
+                button.showing-feedback[style*="background-image"] {
+                    background-image: none !important;
                 }
                 .options.hide-others button:not(.showing-feedback) {
                     opacity: 0;
@@ -126,15 +152,19 @@ class Questions extends HTMLElement {
                     pointer-events: none;
                     padding: 0;
                     height: 0px;
-                    min-height: 0px;
+                    min-height: 0px !important;
                     overflow: hidden;
                     transition: opacity 1s ease, height 1s ease, padding 1s ease, border 1s ease;
+                }
+                .options.hide-others {
+                    justify-content: center;
+                    align-items: center;
                 }
                 .options {
                     display: flex;
                     flex-direction: column;
                     gap: 12px;
-                    width: 80%;
+                    width: 90%;
                     position: relative;
                 }
                 .next-button {
@@ -149,13 +179,16 @@ class Questions extends HTMLElement {
                 }
             </style>
             <div class="question-container">
-                <div class="question">${t(`questions.${this.currentQuestion}.question`)}</div>
+                <div class="question">${this.renderContent(t(`questions.${this.currentQuestion}.question`))}</div>
                 <div class="options">
                     ${Object.keys(question)
                         .filter(key => key.startsWith('a') && !key.includes('feedback'))
-                        .map(key => `
-                            <button data-index="${key.substring(1) - 1}">${t(`questions.${this.currentQuestion}.${key}`)}</button>
-                        `).join('')}
+                        .map(key => {
+                            const content = t(`questions.${this.currentQuestion}.${key}`);
+                            const isImage = content && content.includes('/images');
+                            const buttonStyle = isImage ? `style="background-image: url('${content}'); min-height: 17vh;"` : '';
+                            return `<button data-index="${key.substring(1) - 1}" ${buttonStyle}>${isImage ? '' : content}</button>`;
+                        }).join('')}
                 </div>
                 <button class="next-button">${t('buttons.nextQuestion')}</button>
             </div>
@@ -181,17 +214,26 @@ class Questions extends HTMLElement {
                 // Only show feedback if it exists for this answer
                 const feedbackKey = `a${selectedIndex + 1}-feedback`;
                 if (question[feedbackKey]) {
-                    button.textContent = t(`questions.${this.currentQuestion}.${feedbackKey}`);
+                    const feedbackContent = t(`questions.${this.currentQuestion}.${feedbackKey}`);
+                    const isImage = feedbackContent && feedbackContent.includes('/images');
                     
+                    if (isImage) {
+                        button.style.backgroundImage = `url('${feedbackContent}')`;
+                        button.innerHTML = '';
+                    } else {
+                        // Clear any existing background image when showing text feedback
+                        button.style.backgroundImage = '';
+                        button.innerHTML = feedbackContent;
+                    }
+                    
+                    button.classList.add('showing-feedback');
+                    // Hide other buttons only when showing feedback
+                    const optionsContainer = this.shadowRoot.querySelector('.options');
+                    optionsContainer.classList.add('hide-others');
                 } else {
                     // If no feedback, just disable all buttons without visual changes
                     buttons.forEach(btn => btn.disabled = true);
                 }
-                    
-                button.classList.add('showing-feedback');
-                // Still hide other buttons
-                const optionsContainer = this.shadowRoot.querySelector('.options');
-                optionsContainer.classList.add('hide-others');
                 
 
                 // Show next button

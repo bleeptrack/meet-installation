@@ -7,52 +7,97 @@
     "nextQuestion": "Next Question"
   },
   "errors": {
-    "usernameRequired": "Username is required"
+    "usernameRequired": "Username is required",
+    "usernameTaken": "Username already taken"
   },
   "usernamePlaceholder": "Enter your username",
   "waitingForStart": "Just a moment...",
   "questions": [
     {
-      "question": "Do you prefer...?",
-      "a1": "Brit-Pop",
-      "a2": "K-Pop",
-      "a3": "Electro-Pop"
+      "question": "What comes to mind when you think of North Korea?",
+      "a1": "Mass gatherings",
+      "a2": "Kim Il Sung, Kim Jong Il, Kim Jong Un",
+      "a3": "Dennis Rodman"
     },
     {
-      "question": "What is your favorite transport?",
-      "a1": "train",
-      "a1-feedback": "feedback1",
-      "a2": "plain",
-      "a2-feedback": "feedback2",
-      "a3": "horse",
-      "a3-feedback": "feedback3"
+      "question": "North Korea's national colors are white, red, and blue. Which of these colors appeals to you most?",
+      "a1": "red",
+      "a2": "white",
+      "a3": "blue"
     },
     {
-      "question": "How many children would you like to have?",
-      "a1": "1",
-      "a2": "6",
-      "a3": "4"
+      "question": "If you had to choose one of these hairstyles, which style would you choose?",
+      "a1": "/images/frisur1.png",
+      "a2": "/images/frisur2.png",
+      "a3": "/images/frisur3.png"
     },
     {
-      "question": "What are allies?",
-      "a1": "aliens",
-      "a1-feedback": "feedback1",
-      "a2": "friends",
-      "a2-feedback": "feedback2",
-      "a3": "enemies",
-      "a3-feedback": "feedback3"
+      "question":"If you had to choose one of these hairstyles, which style would you choose?",
+      "a1": "/images/kim1.png",
+      "a1-feedback": "Great choice! However, other people are not allowed to wear anyone of these hairstyles.",
+      "a2": "/images/kim2.png",
+      "a2-feedback": "Great choice! However, other people are not allowed to wear anyone of these hairstyles.",
+      "a3": "/images/kim3.png",
+      "a3-feedback": "Great choice! However, other people are not allowed to wear anyone of these hairstyles."
     },
     {
-      "question": "Pollution is...",
-      "a1": "yes",
-      "a2": "no",
-      "a3": "maybe"
+      "question": "What's your favorite mode of transportation?",
+      "a1": "Subway",
+      "a1-feedback": "Old Berlin U5 trains run in Pyongyang. According to North Korean YouTuber Eun-a, approximately 400,000 people use the subway every day between 6:00 a.m. and 9:20 p.m.",
+      "a2": "S-Bahn",
+      "a2-feedback": "IOld Berlin U5 trains run in Pyongyang. According to North Korean YouTuber Eun-a, approximately 400,000 people use the subway every day between 6:00 a.m. and 9:20 p.m.",
+      "a3": "Tram",
+      "a3-feedback": "Old Berlin U5 trains run in Pyongyang. According to North Korean YouTuber Eun-a, approximately 400,000 people use the subway every day between 6:00 a.m. and 9:20 p.m."
+    },
+    {
+      "question": "Which of the flowers would you choose?",
+      "a1": "/images/blumen1.png",
+      "a1-feedback": "The white magnolia is the national flower of North Korea. The flower species Kimjongilia and Kimilsungia were named after the first two dictators. Kim Jong Un does not yet have a flower in his name.",
+      "a2": "/images/blumen2.png",
+      "a2-feedback": "The white magnolia is the national flower of North Korea. The flower species Kimjongilia and Kimilsungia were named after the first two dictators. Kim Jong Un does not yet have a flower in his name.",
+      "a3": "/images/blumen3.png",
+      "a3-feedback": "The white magnolia is the national flower of North Korea. The flower species Kimjongilia and Kimilsungia were named after the first two dictators. Kim Jong Un does not yet have a flower in his name."
+    },
+ {
+      "question": "Which of these professions do you think is most recognized in North Korea?",
+      "a1": "Dancer",
+      "a1-feedback": "All North Koreans, including high-ranking generals, are recruited for field work annually. Dancers and other artists are exempt.",
+      "a2": "Cook",
+      "a2-feedback": "All North Koreans, including high-ranking generals, are recruited for field work annually. Dancers and other artists are exempt.",
+      "a3": "Shaman",
+      "a3-feedback": "All North Koreans, including high-ranking generals, are recruited for field work annually. Dancers and other artists are exempt."
+    },
+    {
+      "question": "Which food makes you most curious?",
+      "a1": "/images/essen1.png",
+      "a1-feedback": "The cold noodle dish naengmyeon (option A) is typically made from buckwheat in Pyongyang. In the port city of Hamhung on North Korea's east coast, however, the noodles are made from potato starch.",
+      "a2": "/images/essen2.png",
+      "a2-feedback": "The cold noodle dish naengmyeon (option A) is typically made from buckwheat in Pyongyang. In the port city of Hamhung on North Korea's east coast, however, the noodles are made from potato starch.",
+      "a3": "/images/essen3.png",
+      "a3-feedback": "The cold noodle dish naengmyeon (option A) is typically made from buckwheat in Pyongyang. In the port city of Hamhung on North Korea's east coast, however, the noodles are made from potato starch."
+    },
+    {
+      "question": "When did North Korean students last visit Berlin?",
+      "a1": "2020",
+      "a1-feedback": "In 2020, students came to the Free University to learn German and German food culture. Since 1952, North Korean students (10% of whom were women) have been coming to study in the GDR. More than 20 North Korean students fled from here to the West..",
+      "a2": "1952",
+      "a2-feedback": "In 2020, students came to the Free University to learn German and German food culture. Since 1952, North Korean students (10% of whom were women) have been coming to study in the GDR. More than 20 North Korean students fled from here to the West.",
+      "a3": "1969",
+      "a3-feedback": "In 2020, students came to the Free University to learn German and German food culture. Since 1952, North Korean students (10% of whom were women) have been coming to study in the GDR. More than 20 North Korean students fled from here to the West."
+    },
+    {
+      "question": "Where would you stay overnight?",
+      "a1": "/images/Hostel1.jpg",
+      "a1-feedback": "The “City Hostel,” located on the grounds of the North Korean embassy in Berlin, earned 40,000 euros a month for the North Korean state until its closure in 2020.",
+      "a2": "/images/Hostel2.jpg",
+      "a2-feedback": "The “City Hostel,” located on the grounds of the North Korean embassy in Berlin, earned 40,000 euros a month for the North Korean state until its closure in 2020.",
+      "a3": "/images/Hostel3.jpg",
+      "a3-feedback": "The “City Hostel,” located on the grounds of the North Korean embassy in Berlin, earned 40,000 euros a month for the North Korean state until its closure in 2020."
     }
-
   ],
   "congratulations": "Congratulations! You have a match!",
   "questions-wait-to-finish": "Please wait while others finish the questions...",
-  "tarotCardText": "This ID will guide you through the night. Keep it safe!",
+  "tarotCardText": "This card will guide you through the show. Keep it safe!",
   "downloadCard": "Download Card",
   "group": "Group"
 } 

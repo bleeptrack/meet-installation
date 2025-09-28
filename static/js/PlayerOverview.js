@@ -6,18 +6,21 @@ class PlayerOverview extends HTMLElement {
         this.attachShadow({ mode: 'open' });
         this.players = [];
         this.assigningChildFor = null; // Track which parent is assigning a child
+        this.totalQuestions = 5; // Default value, will be updated from JSON
         console.log('Window socket before assignment:', window.socket);
         this.socket = window.socket; // Use the global socket instance
         console.log('Socket after assignment:', this.socket);
     }
 
-    connectedCallback() {
+    async connectedCallback() {
         if (!this.socket) {
             console.error('Socket is not available!');
             return;
         }
 
-        
+        // Load question count from JSON
+        await this.loadQuestionCount();
+
         // Add socket connection status listeners
         this.socket.on('connect', () => {
             console.log('Socket connected with ID:', this.socket.id);
@@ -26,8 +29,6 @@ class PlayerOverview extends HTMLElement {
         this.socket.on('disconnect', () => {
             console.log('Socket disconnected');
         });
-
-        
 
         this.socket.on('info:sessionStatus', (sessionStatus) => {
             console.log('Received info:sessionStatus event:', sessionStatus);
@@ -55,6 +56,18 @@ class PlayerOverview extends HTMLElement {
             this.sessionToken = data.sessionToken;
             this.render();
         });
+    }
+
+    async loadQuestionCount() {
+        try {
+            const response = await fetch('/translations/de-DE.json');
+            const data = await response.json();
+            this.totalQuestions = data.questions ? data.questions.length : 5;
+            console.log('Loaded question count:', this.totalQuestions);
+        } catch (error) {
+            console.error('Error loading question count:', error);
+            // Keep default value of 5
+        }
     }
 
     disconnectedCallback() {
@@ -121,6 +134,9 @@ class PlayerOverview extends HTMLElement {
                     background-color: #cccccc;
                     cursor: not-allowed;
                 }
+                .language-badge {
+                    float: right;
+                }
             </style>
             <div class="player-list">
                 ${this.players.some(player => player.groupId !== undefined) ? this.renderGroupedPlayers() : this.renderPlayerList()}
@@ -158,7 +174,7 @@ class PlayerOverview extends HTMLElement {
     renderPlayerList() {
         return this.players.map(player => {
             const answerCount = player.answers ? player.answers.length : 0;
-            const color = answerCount >= 5 ? this.getPairColor(11) : this.getPairColor(0);
+            const color = answerCount >= this.totalQuestions ? this.getPairColor(11) : this.getPairColor(0);
 
             // Show if player is parent or child
             let roleLabel = '';
@@ -206,9 +222,16 @@ class PlayerOverview extends HTMLElement {
             const statusTitle = player.connected ? 'Connected' : 'Disconnected';
             const statusDot = `<span class="status-dot ${statusClass}" title="${statusTitle}"></span>`;
 
+            // Language display
+            const language = player.language || 'de-DE';
+            const languageDisplay = language === 'de-DE' ? 'DE' : 'EN';
+
             return `
                 <div class="player-item" style="background-color: ${color}">
-                    ${statusDot}${player.username} ${answerCount} ${roleLabel} ${connectionLabel}
+                    ${statusDot}${player.username} <span class="language-badge">${languageDisplay}</span> ${answerCount} ${roleLabel} ${connectionLabel}
+                    <label style="margin-left: 10px;">
+                        <input type="checkbox" id="dgs-${player.username}" ${player.dgs ? 'checked' : ''} style="margin-right: 5px;">DGS
+                    </label>
                     ${assignChildUI}
                     ${removeConnectionBtn}
                 </div>
@@ -237,30 +260,67 @@ class PlayerOverview extends HTMLElement {
             <div class="groups-container" style="display: flex; justify-content: space-between; gap: 20px;">
                 <div class="group-container">
                     <h3>Group A</h3>
-                    ${(groups[0] || []).map((player, index, array) => `
+                    ${(groups[0] || []).map((player, index, array) => {
+                        const language = player.language || 'de-DE';
+                        const languageDisplay = language === 'de-DE' ? 'DE' : 'EN';
+                        const dgsDisplay = player.dgs ? 'DGS' : '';
+                        const answerCount = player.answers ? player.answers.length : 0;
+                        const completionIndicator = answerCount >= this.totalQuestions ? '✓' : '';
+                        return `
                         ${index > 0 && player.pairIndex !== array[index - 1].pairIndex ? '<hr style="margin: 10px 0; border: 1px dashed #ccc;">' : ''}
                         <div class="player-item" style="background-color: ${this.getPairColor(player.pairIndex)}">
-                            <span class="status-dot ${player.connected ? 'connected' : 'disconnected'}" title="${player.connected ? 'Connected' : 'Disconnected'}"></span>${player.username}
+                            <span class="status-dot ${player.connected ? 'connected' : 'disconnected'}" title="${player.connected ? 'Connected' : 'Disconnected'}"></span>${player.username} <span class="language-badge">${languageDisplay}</span> ${dgsDisplay ? `<span style="color: #FF6B35; font-weight: bold;">${dgsDisplay}</span>` : ''} 
+                            <span id="count-${player.username}">(${answerCount}${completionIndicator})</span>
+                            <select id="groupSelect-${player.username}" style="margin-left: 10px; padding: 2px;">
+                                <option value="0" ${player.groupId === 0 ? 'selected' : ''}>Group A</option>
+                                <option value="1" ${player.groupId === 1 ? 'selected' : ''}>Group B</option>
+                                <option value="2" ${player.groupId === 2 ? 'selected' : ''}>Group C</option>
+                            </select>
                         </div>
-                    `).join('')}
+                    `;
+                    }).join('')}
                 </div>
                 <div class="group-container">
                     <h3>Group B</h3>
-                    ${(groups[1] || []).map((player, index, array) => `
+                    ${(groups[1] || []).map((player, index, array) => {
+                        const language = player.language || 'de-DE';
+                        const languageDisplay = language === 'de-DE' ? 'DE' : 'EN';
+                        const dgsDisplay = player.dgs ? 'DGS' : '';
+                        const answerCount = player.answers ? player.answers.length : 0;
+                        const completionIndicator = answerCount >= this.totalQuestions ? '✓' : '';
+                        return `
                         ${index > 0 && player.pairIndex !== array[index - 1].pairIndex ? '<hr style="margin: 10px 0; border: 1px dashed #ccc;">' : ''}
                         <div class="player-item" style="background-color: ${this.getPairColor(player.pairIndex)}">
-                            <span class="status-dot ${player.connected ? 'connected' : 'disconnected'}" title="${player.connected ? 'Connected' : 'Disconnected'}"></span>${player.username}
+                            <span class="status-dot ${player.connected ? 'connected' : 'disconnected'}" title="${player.connected ? 'Connected' : 'Disconnected'}"></span>${player.username} <span class="language-badge">${languageDisplay}</span> ${dgsDisplay ? `<span style="color: #FF6B35; font-weight: bold;">${dgsDisplay}</span>` : ''} ${answerCount}${completionIndicator}
+                            <select id="groupSelect-${player.username}" style="margin-left: 10px; padding: 2px;">
+                                <option value="0" ${player.groupId === 0 ? 'selected' : ''}>Group A</option>
+                                <option value="1" ${player.groupId === 1 ? 'selected' : ''}>Group B</option>
+                                <option value="2" ${player.groupId === 2 ? 'selected' : ''}>Group C</option>
+                            </select>
                         </div>
-                    `).join('')}
+                    `;
+                    }).join('')}
                 </div>
                 <div class="group-container">
                     <h3>Group C</h3>
-                    ${(groups[2] || []).map((player, index, array) => `
+                    ${(groups[2] || []).map((player, index, array) => {
+                        const language = player.language || 'de-DE';
+                        const languageDisplay = language === 'de-DE' ? 'DE' : 'EN';
+                        const dgsDisplay = player.dgs ? 'DGS' : '';
+                        const answerCount = player.answers ? player.answers.length : 0;
+                        const completionIndicator = answerCount >= this.totalQuestions ? '✓' : '';
+                        return `
                         ${index > 0 && player.pairIndex !== array[index - 1].pairIndex ? '<hr style="margin: 10px 0; border: 1px dashed #ccc;">' : ''}
                         <div class="player-item" style="background-color: ${this.getPairColor(player.pairIndex)}">
-                            <span class="status-dot ${player.connected ? 'connected' : 'disconnected'}" title="${player.connected ? 'Connected' : 'Disconnected'}"></span>${player.username}
+                            <span class="status-dot ${player.connected ? 'connected' : 'disconnected'}" title="${player.connected ? 'Connected' : 'Disconnected'}"></span>${player.username} <span class="language-badge">${languageDisplay}</span> ${dgsDisplay ? `<span style="color: #FF6B35; font-weight: bold;">${dgsDisplay}</span>` : ''} ${answerCount}${completionIndicator}
+                            <select id="groupSelect-${player.username}" style="margin-left: 10px; padding: 2px;">
+                                <option value="0" ${player.groupId === 0 ? 'selected' : ''}>Group A</option>
+                                <option value="1" ${player.groupId === 1 ? 'selected' : ''}>Group B</option>
+                                <option value="2" ${player.groupId === 2 ? 'selected' : ''}>Group C</option>
+                            </select>
                         </div>
-                    `).join('')}
+                    `;
+                    }).join('')}
                 </div>
             </div>
         `;
@@ -335,6 +395,29 @@ class PlayerOverview extends HTMLElement {
             if (removeBtn) {
                 removeBtn.addEventListener('click', () => {
                     this.socket.emit('action:removeParentChild', { parentUsername: player.username });
+                });
+            }
+            
+            // DGS checkbox event listener
+            const dgsCheckbox = this.shadowRoot.querySelector(`#dgs-${player.username}`);
+            if (dgsCheckbox) {
+                dgsCheckbox.addEventListener('change', (event) => {
+                    this.socket.emit('action:updateDGS', {
+                        username: player.username,
+                        dgs: event.target.checked
+                    });
+                });
+            }
+            
+            // Group selection dropdown event listener
+            const groupSelect = this.shadowRoot.querySelector(`#groupSelect-${player.username}`);
+            if (groupSelect) {
+                groupSelect.addEventListener('change', (event) => {
+                    const newGroupId = parseInt(event.target.value);
+                    this.socket.emit('action:reassignGroup', {
+                        username: player.username,
+                        newGroupId: newGroupId
+                    });
                 });
             }
         });

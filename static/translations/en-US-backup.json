@@ -1,0 +1,59 @@
+{
+  "welcome": "Welcome",
+  "language": "Language",
+  "buttons": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "nextQuestion": "Next Question"
+  },
+  "errors": {
+    "usernameRequired": "Username is required",
+    "usernameTaken": "Username already taken"
+  },
+  "usernamePlaceholder": "Enter your username",
+  "waitingForStart": "Just a moment...",
+  "questions": [
+    {
+      "question": "Do you prefer...?",
+      "a1": "Brit-Pop",
+      "a2": "K-Pop",
+      "a3": "Electro-Pop"
+    },
+    {
+      "question": "What is your favorite transport?",
+      "a1": "train",
+      "a1-feedback": "feedback1",
+      "a2": "plain",
+      "a2-feedback": "feedback2",
+      "a3": "horse",
+      "a3-feedback": "feedback3"
+    },
+    {
+      "question": "How many children would you like to have?",
+      "a1": "1",
+      "a2": "6",
+      "a3": "4"
+    },
+    {
+      "question": "What are allies?",
+      "a1": "aliens",
+      "a1-feedback": "feedback1",
+      "a2": "friends",
+      "a2-feedback": "feedback2",
+      "a3": "enemies",
+      "a3-feedback": "feedback3"
+    },
+    {
+      "question": "Pollution is...",
+      "a1": "yes",
+      "a2": "no",
+      "a3": "maybe"
+    }
+
+  ],
+  "congratulations": "Congratulations! You have a match!",
+  "questions-wait-to-finish": "Please wait while others finish the questions...",
+  "tarotCardText": "This ID will guide you through the night. Keep it safe!",
+  "downloadCard": "Download Card",
+  "group": "Group"
+} 

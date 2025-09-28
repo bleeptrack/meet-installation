@@ -11,7 +11,7 @@ export const sharedStyles = `
         border: 3px solid rgba(255, 255, 255, 0.6);
         border-radius: 30px;
         cursor: pointer;
-        font-family: 'Chewy', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif;
+        font-family: 'Arial Rounded MT Bold', Arial, sans-serif;
         font-size: 28px;
         box-shadow: 
             0 0 20px rgba(255, 255, 255, 0.8),
@@ -35,6 +35,7 @@ export const sharedStyles = `
 
     button:active, .button:active, .download-link:active {
         transform: scale(0.98);
+        opacity: 0.7;
         box-shadow: 
             0 0 15px rgba(255, 255, 255, 0.6),
             0 0 30px rgba(255, 255, 255, 0.3),

@@ -6,18 +6,16 @@
     <meta name="theme-color" content="#ff69b4">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Localized Website</title>
+    <script
+        src="https://js-de.sentry-cdn.com/f6545b9d8c1f3238541447238ede575b.min.js"
+        crossorigin="anonymous"
+    ></script>
     <link rel="stylesheet" href="/styles.css">
     <script src="/socket.io/socket.io.js"></script>
-    <script type="importmap">
-    {
-      "imports": {
-        "i18next": "/node_modules/i18next/dist/esm/i18next.js",
-        "i18next-browser-languagedetector": "/node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js",
-        "i18next-http-backend": "/node_modules/i18next-http-backend/esm/index.js"
-      }
-    }
-    </script>
     <script type="module" src="/js/i18n.js"></script>
     <script type="module" src="/js/language-switcher.js"></script>
     <script type="module" src="/js/UsernameChooser.js"></script>
@@ -72,7 +70,7 @@
     </div>
 
     <script type="module">
-        import i18next from 'i18next';
+        import i18next from 'https://esm.sh/i18next@25.2.1';
         import { t, i18nPromise } from '/js/i18n.js';
 
         // Wait for i18next to initialize before setting up the application
@@ -92,18 +90,48 @@
                     return;
                 }
 
-
-
-                document.querySelector('#waitingForStart').innerHTML = `<username-chooser></username-chooser>`;
+                // Clear any potentially stale session data on page load
+                // This helps prevent issues with cached tokens
+                const urlParams = new URLSearchParams(window.location.search);
+                const currentToken = urlParams.get('token');
+                const storedToken = localStorage.getItem('sessionToken');
                 
-                // If we have a stored username, automatically reconnect with it
+                // If we have a stored token that doesn't match the URL token, clear localStorage
+                if (storedToken && storedToken !== currentToken) {
+                    console.log('Clearing stale session data. Stored:', storedToken, 'URL:', currentToken);
+                    localStorage.removeItem('username');
+                    localStorage.removeItem('sessionToken');
+                }
+
+                // Check if we have a stored username for this session (refresh after potential cleanup)
                 const storedUsername = localStorage.getItem('username');
-                if (storedUsername) {
-                    console.log("Sending username", storedUsername);
+                const finalStoredToken = localStorage.getItem('sessionToken');
+                
+                console.log('Auto-reconnect check:', {
+                    storedUsername,
+                    storedToken: finalStoredToken,
+                    currentToken,
+                    tokensMatch: finalStoredToken === currentToken
+                });
+                
+                if (storedUsername && finalStoredToken === currentToken) {
+                    // Auto-reconnect with stored username
+                    console.log("Sending username", storedUsername, "for session", currentToken);
                     document.querySelector('#username').innerHTML = storedUsername;
                     window.socket.emit('action:username', {
-                        username: storedUsername
+                        username: storedUsername,
+                        token: currentToken
                     }, (ack) => {
+                        // Send current language to server
+                        const currentLanguage = i18next.language || 'de-DE';
+                        window.socket.emit('action:language', {
+                            username: storedUsername,
+                            language: currentLanguage
+                        }, (langResponse) => {
+                            if (langResponse.success) {
+                                console.log('Initial language set on server:', currentLanguage);
+                            }
+                        });
                         // ack.phase and ack.player are available here
                         // Optionally, you can use this info to update the UI or state
                         console.log('Server acknowledged username:', ack);
@@ -118,10 +146,25 @@
                         } else if(ack.phase === "grouping") {
                             renderGroup(ack.player);
                         } else if(ack.phase === "username") {
-                            document.querySelector('#waitingForStart').innerHTML = `<username-chooser username="${ack.player.username}"></username-chooser>`;
+                            // Don't show username chooser again - we already auto-reconnected
+                            // Just show waiting message
+                            document.querySelector('#waitingForStart').innerHTML = `<h2>${t('waitingForStart')}</h2>`;
+                        } else if(ack.phase === "invalid_session") {
+                            // Clear invalid session data and show error
+                            localStorage.removeItem('username');
+                            localStorage.removeItem('sessionToken');
+                            document.querySelector('#waitingForStart').innerHTML = `<h2>Session expired. Please refresh the page and try again.</h2>`;
                         }
                         // UI update will be handled by the order event listeners below
                     });
+                } else if (finalStoredToken && finalStoredToken !== currentToken) {
+                    // Old session token - clear it and show error
+                    localStorage.removeItem('username');
+                    localStorage.removeItem('sessionToken');
+                    document.querySelector('#waitingForStart').innerHTML = `<h2>Session expired. Please refresh the page and try again.</h2>`;
+                } else {
+                    // No stored username for this session, show username chooser
+                    document.querySelector('#waitingForStart').innerHTML = `<username-chooser></username-chooser>`;
                 }
             });
 
@@ -131,12 +174,33 @@
 
             window.socket.on('order:username', () => {
                 console.log("Received order:username");
-                document.querySelector('main').innerHTML = '<username-chooser></username-chooser>';
+                // Only show username chooser if user doesn't have a stored username for this session
+                const storedUsername = localStorage.getItem('username');
+                const storedToken = localStorage.getItem('sessionToken');
+                const currentToken = new URLSearchParams(window.location.search).get('token');
+                
+                if (!storedUsername || storedToken !== currentToken) {
+                    document.querySelector('main').innerHTML = '<username-chooser></username-chooser>';
+                }
             });
 
             window.socket.on('order:questions', () => {
                 console.log("Received order:questions");
-                document.querySelector('main').innerHTML = '<questions-component></questions-component>';
+                // Get current player's progress to preserve their question state
+                const username = localStorage.getItem('username');
+                if (username) {
+                    // Request current player data to get their answer progress
+                    window.socket.emit('action:getPlayers', {}, (data) => {
+                        const currentPlayer = data.players.find(player => player.username === username);
+                        let currentQuestion = 0;
+                        if (currentPlayer && currentPlayer.answers) {
+                            currentQuestion = currentPlayer.answers.length;
+                        }
+                        document.querySelector('main').innerHTML = `<questions-component current-question="${currentQuestion}"></questions-component>`;
+                    });
+                } else {
+                    document.querySelector('main').innerHTML = '<questions-component></questions-component>';
+                }
             });
 
             window.socket.on('order:results', (players) => {
@@ -169,8 +233,10 @@
 
             // Update translations when language changes
             window.addEventListener('languageChanged', (event) => {
-                if(document.querySelector('#waitingForStart')) {
-                    document.querySelector('#waitingForStart').textContent = t('waitingForStart');
+                const waitingElement = document.querySelector('#waitingForStart');
+                if(waitingElement && !waitingElement.querySelector('username-chooser')) {
+                    // Only update if it's not containing a username-chooser component
+                    waitingElement.textContent = t('waitingForStart');
                 }
                 if(document.querySelector('#group-label')) {
                     document.querySelector('#group-label').textContent = t('group');
@@ -181,14 +247,114 @@
         });
 
         function renderTarotCard(currentPlayer) {
+            if (!currentPlayer) {
+                console.error("Current player not found");
+                document.querySelector('main').innerHTML = '<h2>Player data not found</h2>';
+                return;
+            }
+            
             const pairIndex = currentPlayer.pairIndex;
-            document.querySelector('main').innerHTML = `<tarot-card image-url="https://www.tarot.com/images/cards/the-fool.jpg" text="Pair ${pairIndex}"></tarot-card>`;
+            const imageIndex = currentPlayer.imageIndex;
+            document.querySelector('main').innerHTML = `<tarot-card pair-index="${pairIndex}" image-index="${imageIndex}" number="${pairIndex}-${imageIndex}"></tarot-card>`;
         }
 
         function renderGroup(currentPlayer) {
             const groupId = currentPlayer.groupId;
             const groupLetter = String.fromCharCode(65 + groupId); // Convert 0 to 'A', 1 to 'B', etc.
             document.querySelector('main').innerHTML = `<h2><span id="group-label">${t('group')}</span> ${groupLetter}</h2>`;
+
+            // Change the main container's background color instead of body
+            const mainElement = document.querySelector('main').querySelector('h2');
+            mainElement.style.width = '80%';
+            mainElement.style.height = '80%';
+            mainElement.style.border = '4px solid white';
+            mainElement.style.borderRadius = '10px';
+            mainElement.style.textAlign = 'center';
+            mainElement.style.display = 'flex';
+            mainElement.style.flexDirection = 'column';
+            mainElement.style.justifyContent = 'center';
+            mainElement.style.alignItems = 'center';
+            mainElement.style.margin = 'auto';
+            mainElement.style.minHeight = '60vh';
+            switch(groupId) {
+                case 0:
+                    mainElement.style.backgroundColor = 'magenta';
+                    break;
+                case 1:
+                    mainElement.style.backgroundColor = 'orange';
+                    break;
+                case 2:
+                    mainElement.style.backgroundColor = 'purple';
+                    break;
+            }
+        }
+
+        // Enhanced download handling for mobile devices
+        function handleDownload(event, imageUrl, filename) {
+            // Check if we're on a mobile device
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                // For mobile devices, try to use the File System Access API if available
+                if ('showSaveFilePicker' in window) {
+                    event.preventDefault();
+                    downloadWithFilePicker(imageUrl, filename);
+                } else {
+                    // Fallback: show instructions for mobile users
+                    event.preventDefault();
+                    showMobileDownloadInstructions(filename);
+                }
+            }
+            // For desktop, let the default download behavior proceed
+        }
+
+        async function downloadWithFilePicker(imageUrl, filename) {
+            try {
+                // Fetch the image
+                const response = await fetch(imageUrl);
+                const blob = await response.blob();
+                
+                // Show file picker
+                const fileHandle = await window.showSaveFilePicker({
+                    suggestedName: filename,
+                    types: [{
+                        description: 'Image files',
+                        accept: {
+                            'image/jpeg': ['.jpg'],
+                            'image/png': ['.png']
+                        }
+                    }]
+                });
+                
+                // Write the file
+                const writable = await fileHandle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+                
+                alert('Image saved successfully!');
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    // User cancelled the save dialog
+                    return;
+                }
+                console.error('Error saving file:', error);
+                // Fallback to regular download
+                window.open(imageUrl, '_blank');
+            }
+        }
+
+        function showMobileDownloadInstructions(filename) {
+            const message = `To save this image to your Photos/Gallery:
+            
+1. Long press on the image above
+2. Select "Save to Photos" or "Download image"
+3. The image will be saved to your device's gallery
+
+Alternatively, you can:
+- Tap and hold the image
+- Choose "Add to Photos" or "Save image"`;
+            
+            alert(message);
         }
     </script>
 </body>

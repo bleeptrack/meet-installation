@@ -1,4 +1,4 @@
-import i18next from 'i18next';
+import i18next from 'https://esm.sh/i18next@25.2.1';
 import { t, i18nPromise } from '/js/i18n.js';
 import { sharedStyles } from '/js/shared-styles.js';
 
@@ -9,7 +9,7 @@ class TarotCard extends HTMLElement {
     }
 
     static get observedAttributes() {
-        return ['number'];
+        return ['number', 'pair-index', 'image-index'];
     }
 
     async connectedCallback() {
@@ -36,7 +36,13 @@ class TarotCard extends HTMLElement {
 
     render() {
         const number = this.getAttribute('number') || '';
-        const imageUrl = `/static/images/cards/${number}.jpg`;
+        const pairIndex = Number(this.getAttribute('pair-index'))+1 || '';
+        const imageIndex = this.getAttribute('image-index') || '';
+        
+        // Construct image URL using the new naming scheme: pairIndex-imageIndex.png
+        let order = `${pairIndex}-${imageIndex}`;
+        let imageUrl = `/cards/${order}.png`;
+    
 
         this.shadowRoot.innerHTML = `
             <style>
@@ -59,51 +65,26 @@ class TarotCard extends HTMLElement {
                     width: 100%;
                     max-width: 600px;
                     margin: 0 auto;
-                    padding: 20px;
                     text-align: center;
                     box-sizing: border-box;
                 }
                 .image {
                     max-width: 100%;
-                    max-height: 80vh;
+                    max-height: 50vh;
                     object-fit: contain;
-                    margin: 20px 0;
                 }
                 .text {
-                    font-size: 1rem;
+                    font-size: 0.7rem;
                     line-height: 1.5;
                     margin: 10px 0;
                     width: 100%;
                 }
-                .placeholder {
-                    width: 200px;
-                    height: 280px;
-                    background: white;
-                    border: 2px solid #333;
-                    border-radius: 10px;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    font-size: 48px;
-                    font-weight: bold;
-                    color: #333;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                }
-                @media (max-width: 768px) {
-                    .card-container {
-                        padding: 15px;
-                    }
-                    .image {
-                        max-height: 60vh;
-                    }
-                }
             </style>
             <div class="card-container">
                 <p class="text">${t('congratulations')}</p>
-                <img class="image" src="${imageUrl}" alt="Card ${number}" onerror="this.style.display='none'; this.parentElement.querySelector('.placeholder').style.display='flex';">
-                <div class="placeholder" style="display: none;">${number}</div>
+                <img class="image" src="${imageUrl}" alt="Card ${order}">
                 <p class="text">${t('tarotCardText')}</p>
-                <a href="${imageUrl}" download="card-${number}.jpg" class="download-link">${t('downloadCard')}</a>
+                <!-- <a href="${imageUrl}" download="card-${order}.png" class="download-link">${t('downloadCard')}</a> -->
             </div>
         `;
     }

@@ -1,14 +1,14 @@
-import i18next from 'i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
-import Backend from 'i18next-http-backend';
+import i18next from 'https://esm.sh/i18next@25.2.1';
+import LanguageDetector from 'https://esm.sh/i18next-browser-languagedetector@8.1.0';
+import Backend from 'https://esm.sh/i18next-http-backend@3.0.2';
 
 // Initialize i18next
 const i18nPromise = i18next
   .use(Backend)
   .use(LanguageDetector)
   .init({
-    fallbackLng: 'en-US',
-    lng: 'en-US',
+    fallbackLng: 'de-DE',
+    lng: 'de-DE',
     debug: true,
     backend: {
       loadPath: '/translations/{{lng}}.json',
@@ -29,7 +29,7 @@ const i18nPromise = i18next
     load: 'languageOnly',
     // Configure language fallbacks
     fallbackLng: {
-      'default': ['en-US']
+      'default': ['de-DE']
     },
     // Disable loading of fallback languages
     load: 'currentOnly'

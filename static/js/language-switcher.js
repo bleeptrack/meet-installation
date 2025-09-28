@@ -1,4 +1,4 @@
-import i18next from 'i18next';
+import i18next from 'https://esm.sh/i18next@25.2.1';
 import { changeLanguage, t, i18nPromise } from './i18n.js';
 
 class LanguageSwitcher extends HTMLElement {
@@ -61,7 +61,25 @@ class LanguageSwitcher extends HTMLElement {
     select.value = i18next.language;
     
     select.addEventListener('change', (e) => {
-      changeLanguage(e.target.value);
+      const newLanguage = e.target.value;
+      changeLanguage(newLanguage);
+      
+      // Send language change to server if socket is available and user is logged in
+      if (window.socket && window.socket.connected) {
+        const username = localStorage.getItem('username');
+        if (username) {
+          window.socket.emit('action:language', {
+            username: username,
+            language: newLanguage
+          }, (response) => {
+            if (response.success) {
+              console.log('Language updated on server:', newLanguage);
+            } else {
+              console.error('Failed to update language on server:', response.error);
+            }
+          });
+        }
+      }
     });
   }
 }
