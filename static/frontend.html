@@ -52,11 +52,62 @@
             right: 0;
             text-align: center;
             padding: 5px;
+            z-index: 1000;
+            font-size: 0.9rem;
+            line-height: 1.2;
+            min-height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #username.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        language-switcher {
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        language-switcher.hidden {
+            opacity: 0;
+            visibility: hidden;
         }
         main {
             flex: 1;
             overflow-y: auto;
-            margin-top: 40px;
+            
+            padding-top: 5px;
+        }
+        /* Mobile-specific adjustments for older Safari */
+        @media screen and (max-width: 768px) {
+            #username {
+                font-size: 0.8rem;
+                padding: 8px 5px;
+                min-height: 40px;
+            }
+            main {
+                margin-top: 45px;
+                padding-top: 8px;
+            }
+        }
+        /* Extra small screens (older iPhones) */
+        @media screen and (max-width: 480px) {
+            #username {
+                font-size: 0.75rem;
+                padding: 10px 5px;
+                min-height: 45px;
+            }
+            main {
+               
+                padding-top: 10px;
+            }
+        }
+        /* Modern Android devices (like Pixel 6 Pro) */
+        @media screen and (min-width: 481px) and (max-width: 768px) {
+            main {
+               
+                padding-top: 5px;
+            }
         }
     </style>
 </head>
@@ -186,6 +237,10 @@
 
             window.socket.on('order:questions', () => {
                 console.log("Received order:questions");
+                // Hide username and language switcher when questions start
+                document.querySelector('#username').classList.add('hidden');
+                document.querySelector('language-switcher').classList.add('hidden');
+                
                 // Get current player's progress to preserve their question state
                 const username = localStorage.getItem('username');
                 if (username) {
@@ -205,6 +260,10 @@
 
             window.socket.on('order:results', (players) => {
                 console.log("Received order:results");
+                // Show username and language switcher again for results
+                document.querySelector('#username').classList.remove('hidden');
+                document.querySelector('language-switcher').classList.remove('hidden');
+                
                 const username = localStorage.getItem('username');
                 const currentPlayer = players.find(player => player.username === username);
                 console.log("Current player:", currentPlayer);
@@ -214,6 +273,10 @@
 
             window.socket.on('order:grouping', (players) => {
                 console.log("Received order:grouping");
+                // Show username and language switcher again for grouping
+                document.querySelector('#username').classList.remove('hidden');
+                document.querySelector('language-switcher').classList.remove('hidden');
+                
                 const username = localStorage.getItem('username');
                 const currentPlayer = players.find(player => player.username === username);
                 console.log("Current player:", currentPlayer);

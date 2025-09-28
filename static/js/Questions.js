@@ -64,7 +64,8 @@ class Questions extends HTMLElement {
                     width: 100%;
                     min-height: calc(100vh - 50px);
                     min-height: calc(100svh - 50px); /* Small viewport height for mobile */
-                    padding-top: 50px;
+                    padding-top: 10px;
+                    margin-top: 5px;
                 }
                 .question-container {
                     width: 100%;
@@ -176,6 +177,26 @@ class Questions extends HTMLElement {
                 .next-button.visible {
                     opacity: 1;
                     visibility: visible;
+                }
+                /* Mobile-specific adjustments for older Safari */
+                @media screen and (max-width: 768px) {
+                    :host {
+                        padding-top: 15px;
+                        margin-top: 8px;
+                    }
+                }
+                @media screen and (max-width: 480px) {
+                    :host {
+                        padding-top: 20px;
+                        margin-top: 10px;
+                    }
+                }
+                /* Modern Android devices (like Pixel 6 Pro) */
+                @media screen and (min-width: 481px) and (max-width: 768px) {
+                    :host {
+                        padding-top: 10px;
+                        margin-top: 5px;
+                    }
                 }
             </style>
             <div class="question-container">
